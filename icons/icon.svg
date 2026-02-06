@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#0a0f0d"/>
+  <!-- Outer ring -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#2d3b33" stroke-width="24"/>
+  <!-- Middle ring -->
+  <circle cx="256" cy="256" r="130" fill="none" stroke="#d4b872" stroke-width="20" opacity="0.3"/>
+  <!-- Inner ring -->
+  <circle cx="256" cy="256" r="80" fill="none" stroke="#d4b872" stroke-width="16" opacity="0.6"/>
+  <!-- Bullseye center -->
+  <circle cx="256" cy="256" r="36" fill="#d4b872"/>
+  <!-- Top crosshair -->
+  <line x1="256" y1="52" x2="256" y2="120" stroke="#d4b872" stroke-width="8" stroke-linecap="round"/>
+  <!-- Bottom crosshair -->
+  <line x1="256" y1="392" x2="256" y2="460" stroke="#d4b872" stroke-width="8" stroke-linecap="round"/>
+  <!-- Left crosshair -->
+  <line x1="52" y1="256" x2="120" y2="256" stroke="#d4b872" stroke-width="8" stroke-linecap="round"/>
+  <!-- Right crosshair -->
+  <line x1="392" y1="256" x2="460" y2="256" stroke="#d4b872" stroke-width="8" stroke-linecap="round"/>
+</svg>

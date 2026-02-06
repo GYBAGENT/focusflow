@@ -1,0 +1,1349 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FocusFlow — Ứng dụng tập trung</title>
+    <meta name="description" content="FocusFlow giúp bạn tập trung làm việc hiệu quả với quy trình 3 bước: Xác định ưu tiên, Lên lịch, Tập trung sâu. Sử dụng Ma trận Eisenhower và Pomodoro Timer." />
+    <meta name="theme-color" content="#0a0f0d" />
+    <meta name="color-scheme" content="dark light" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json" />
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-96.png" />
+
+    <!-- Apple PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="FocusFlow" />
+    <link rel="apple-touch-icon" href="icons/icon-152.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-192.png" />
+
+    <!-- Microsoft Tile -->
+    <meta name="msapplication-TileColor" content="#0a0f0d" />
+    <meta name="msapplication-TileImage" content="icons/icon-144.png" />
+
+    <link rel="stylesheet" href="styles.css" />
+    <script>
+      // Theme initialization — runs before first paint to prevent flash of wrong theme
+      (function() {
+        var THEME_KEY = 'focusflow_theme';
+        var stored = null;
+        try { stored = localStorage.getItem(THEME_KEY); } catch(e) {}
+        var pref = stored || 'auto';
+        var resolved = pref;
+        if (pref === 'auto') {
+          resolved = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+        }
+        document.documentElement.setAttribute('data-theme', resolved);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', resolved === 'light' ? '#f5f2ec' : '#0a0f0d');
+      })();
+    </script>
+  </head>
+  <body data-no-transition>
+    <div class="app-shell">
+      <!-- Sidebar Navigation -->
+      <nav class="nav-sidebar">
+        <div class="nav-brand">
+          <span class="nav-brand__mark">FF</span>
+          <div class="nav-brand__text">
+            <h1>FocusFlow</h1>
+            <span id="today-date" class="nav-date"></span>
+          </div>
+        </div>
+
+        <ul class="nav-menu">
+          <!-- 3 Flow chính -->
+          <li class="nav-section-label">Flow</li>
+          <li>
+            <button class="nav-item nav-item--flow is-active" data-view="tasks" data-step="1">
+              <span class="nav-step">1</span>
+              <span class="nav-icon">🎯</span>
+              <span class="nav-label">Priority Flow</span>
+              <span id="nav-tasks-count" class="nav-badge">0</span>
+            </button>
+          </li>
+          <li>
+            <button class="nav-item nav-item--flow" data-view="blocks" data-step="2">
+              <span class="nav-step">2</span>
+              <span class="nav-icon">⏰</span>
+              <span class="nav-label">Time Flow</span>
+              <span id="nav-blocks-count" class="nav-badge">0</span>
+            </button>
+          </li>
+          <li>
+            <button class="nav-item nav-item--flow" data-view="timer" data-step="3">
+              <span class="nav-step">3</span>
+              <span class="nav-icon">🔥</span>
+              <span class="nav-label">Deep Flow</span>
+              <span id="nav-focus-dot" class="nav-focus-dot"></span>
+            </button>
+          </li>
+
+          <!-- Phần phụ trợ -->
+          <li class="nav-section-label">Insights</li>
+          <li>
+            <button class="nav-item" data-view="dashboard">
+              <span class="nav-icon">🏠</span>
+              <span class="nav-label">Home</span>
+            </button>
+          </li>
+          <li>
+            <button class="nav-item" data-view="stats">
+              <span class="nav-icon">📈</span>
+              <span class="nav-label">Analytics</span>
+            </button>
+          </li>
+
+          <!-- Phần hỗ trợ -->
+          <li class="nav-section-label">Support</li>
+          <li>
+            <button class="nav-item" data-view="guide">
+              <span class="nav-icon">📖</span>
+              <span class="nav-label">Hướng dẫn</span>
+            </button>
+          </li>
+          <li>
+            <button class="nav-item" data-view="settings">
+              <span class="nav-icon">⚙️</span>
+              <span class="nav-label">Settings</span>
+            </button>
+          </li>
+        </ul>
+
+        <!-- Mini progress ở sidebar -->
+        <div class="nav-progress">
+          <div class="nav-progress__ring" id="nav-goal-ring" style="--progress: 0deg">
+            <span id="nav-goal-text">0/4</span>
+          </div>
+          <span class="nav-progress__label">phiên hôm nay</span>
+        </div>
+
+        <!-- Theme Toggle -->
+        <div class="nav-theme-toggle">
+          <span class="nav-theme-toggle__label">Giao diện</span>
+          <label class="theme-switch" title="Chuyển giao diện sáng/tối">
+            <input type="checkbox" id="sidebar-theme-toggle" aria-label="Chuyển giao diện sáng/tối" />
+            <span class="theme-switch__track">
+              <span class="theme-switch__thumb">
+                <span class="theme-switch__icon theme-switch__icon--moon">🌙</span>
+                <span class="theme-switch__icon theme-switch__icon--sun">☀️</span>
+              </span>
+            </span>
+          </label>
+        </div>
+
+        <!-- Credit -->
+        <div class="nav-credit">
+          <span class="nav-credit__text">Design by</span>
+          <span class="nav-credit__brand">GYB Agent</span>
+        </div>
+      </nav>
+
+      <!-- Mobile Menu Toggle -->
+      <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Mở menu điều hướng" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <!-- Main Content Area -->
+      <main class="main-content">
+        <!-- View: Dashboard (Home) -->
+        <section id="view-dashboard" class="view">
+          <header class="view-header view-header--home">
+            <div class="view-header__top">
+              <div class="view-step-badge view-step-badge--home">
+                <span class="view-step-badge__icon">🏠</span>
+                <span>Home</span>
+              </div>
+            </div>
+            <h2>Chào buổi sáng ☀️</h2>
+            <p class="view-desc">Năng lượng tràn đầy, sẵn sàng chinh phục!</p>
+          </header>
+
+          <!-- Quick Actions -->
+          <div class="home-actions">
+            <div class="home-action-card home-action-card--primary" data-goto="tasks">
+              <div class="home-action-card__icon">🎯</div>
+              <div class="home-action-card__content">
+                <h4>Bắt đầu Flow</h4>
+                <p>Xác định việc ưu tiên → Lên lịch → Focus</p>
+              </div>
+              <span class="home-action-card__arrow">→</span>
+            </div>
+          </div>
+
+          <!-- Dashboard Grid -->
+          <div class="home-grid">
+            <!-- Next Block Card -->
+            <div class="home-card">
+              <div class="home-card__header">
+                <span class="home-card__icon">⏰</span>
+                <span class="home-card__label">Block sắp tới</span>
+              </div>
+              <p id="dashboard-next-block" class="home-card__value">Chưa có block.</p>
+              <p id="dashboard-next-block-meta" class="home-card__meta"></p>
+              <button id="dashboard-start-block" class="btn btn--outline btn--small">Bắt đầu block</button>
+            </div>
+
+            <!-- Next Task Card -->
+            <div class="home-card">
+              <div class="home-card__header">
+                <span class="home-card__icon">🔥</span>
+                <span class="home-card__label">Task ưu tiên</span>
+              </div>
+              <p id="dashboard-next-task" class="home-card__value">Chưa có việc.</p>
+              <p id="dashboard-next-task-meta" class="home-card__meta"></p>
+              <button id="dashboard-start-task" class="btn btn--outline btn--small">Focus ngay</button>
+            </div>
+
+            <!-- Today Progress Card -->
+            <div class="home-card home-card--wide">
+              <div class="home-card__header">
+                <span class="home-card__icon">📈</span>
+                <span class="home-card__label">Tiến độ hôm nay</span>
+              </div>
+              <div class="home-progress">
+                <div class="home-progress__item">
+                  <span id="dashboard-sessions" class="home-progress__value">0</span>
+                  <span class="home-progress__label">phiên</span>
+                </div>
+                <div class="home-progress__divider"></div>
+                <div class="home-progress__item">
+                  <span id="dashboard-minutes" class="home-progress__value">0</span>
+                  <span class="home-progress__label">phút</span>
+                </div>
+                <div class="home-progress__divider"></div>
+                <div class="home-progress__item">
+                  <span id="dashboard-goal" class="home-progress__value">0%</span>
+                  <span class="home-progress__label">mục tiêu</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Sessions -->
+          <div class="home-section">
+            <div class="home-section__header">
+              <span class="home-section__icon">📋</span>
+              <h3>Phiên gần đây</h3>
+            </div>
+            <ul id="dashboard-recent-sessions" class="recent-list"></ul>
+          </div>
+        </section>
+
+        <!-- View: Priority Task Flow -->
+        <section id="view-tasks" class="view is-active">
+          <header class="view-header view-header--flow1">
+            <div class="view-header__top">
+              <div class="view-step-badge">
+                <span class="view-step-badge__icon">🎯</span>
+                <span>Step 1</span>
+              </div>
+              <div id="tasks-next-hint" class="flow-next-btn" hidden>
+                <button class="btn btn--accent btn--small" data-goto="blocks">
+                  Tiếp → Time Flow
+                  <span class="btn__arrow">→</span>
+                </button>
+              </div>
+            </div>
+            <h2>Priority Flow</h2>
+            <p class="view-desc">Xác định việc quan trọng · Phân loại theo Eisenhower Matrix</p>
+          </header>
+
+          <!-- Input card đẹp hơn -->
+          <div class="task-add-card">
+            <div class="task-add-header">
+              <span class="task-add-header__icon">✏️</span>
+              <span class="task-add-header__text">Thêm việc mới</span>
+            </div>
+            <div class="task-add-main">
+              <input id="task-input" type="text" placeholder="Việc cần làm là gì?" class="task-add-input" aria-label="Nhập việc cần làm" />
+              <button id="add-task-btn" class="btn btn--primary btn--icon" aria-label="Thêm việc mới">
+                <span>+</span>
+              </button>
+            </div>
+            <div class="task-add-options-row">
+              <div class="task-add-toggles">
+                <label class="toggle-chip toggle-chip--important" data-tooltip="Việc quan trọng, ảnh hưởng lớn">
+                  <input id="task-important" type="checkbox" />
+                  <span class="toggle-chip__icon">⭐</span>
+                  <span class="toggle-chip__label">Quan trọng</span>
+                </label>
+                <label class="toggle-chip toggle-chip--urgent" data-tooltip="Việc cần làm ngay, có deadline gấp">
+                  <input id="task-urgent" type="checkbox" />
+                  <span class="toggle-chip__icon">⚡</span>
+                  <span class="toggle-chip__label">Khẩn cấp</span>
+                </label>
+              </div>
+              <span class="task-add-hint">Chọn để phân loại tự động</span>
+            </div>
+            <input id="task-estimate" type="hidden" value="30" />
+          </div>
+
+          <!-- Ma trận Eisenhower 2x2 với labels -->
+          <div class="matrix-wrapper">
+            <div class="matrix-labels matrix-labels--top">
+              <span></span>
+              <span class="matrix-label">⭐ QUAN TRỌNG</span>
+              <span class="matrix-label matrix-label--muted">Ít quan trọng</span>
+            </div>
+            <div class="matrix-with-labels">
+              <div class="matrix-labels matrix-labels--left">
+                <span class="matrix-label">⚡ KHẨN CẤP</span>
+                <span class="matrix-label matrix-label--muted">Không gấp</span>
+              </div>
+              <div class="matrix-eisenhower">
+                <div class="matrix-quadrant matrix-quadrant--do">
+                  <div class="matrix-quadrant__header">
+                    <span class="matrix-quadrant__badge">1</span>
+                    <h3>🔥 Làm ngay</h3>
+                  </div>
+                  <p class="matrix-quadrant__desc">Ưu tiên cao nhất</p>
+                  <ul id="matrix-do" class="task-list"></ul>
+                </div>
+
+                <div class="matrix-quadrant matrix-quadrant--schedule">
+                  <div class="matrix-quadrant__header">
+                    <span class="matrix-quadrant__badge">2</span>
+                    <h3>📅 Lên lịch</h3>
+                  </div>
+                  <p class="matrix-quadrant__desc">Lập kế hoạch thực hiện</p>
+                  <ul id="matrix-schedule" class="task-list"></ul>
+                </div>
+
+                <div class="matrix-quadrant matrix-quadrant--delegate">
+                  <div class="matrix-quadrant__header">
+                    <span class="matrix-quadrant__badge">3</span>
+                    <h3>👥 Ủy quyền</h3>
+                  </div>
+                  <p class="matrix-quadrant__desc">Nhờ người khác hỗ trợ</p>
+                  <ul id="matrix-delegate" class="task-list"></ul>
+                </div>
+
+                <div class="matrix-quadrant matrix-quadrant--eliminate">
+                  <div class="matrix-quadrant__header">
+                    <span class="matrix-quadrant__badge">4</span>
+                    <h3>🗑️ Loại bỏ</h3>
+                  </div>
+                  <p class="matrix-quadrant__desc">Cân nhắc bỏ qua</p>
+                  <ul id="matrix-eliminate" class="task-list"></ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="task-footer">
+            <span id="task-meta" class="task-footer__meta">0 việc</span>
+            <button id="clear-completed-btn" class="btn btn--ghost btn--small">
+              <span>🧹</span> Xóa việc đã xong
+            </button>
+          </div>
+        </section>
+
+        <!-- View: Deep Work Flow -->
+        <section id="view-timer" class="view">
+          <header class="view-header view-header--flow3">
+            <div class="view-header__top">
+              <div class="view-step-badge view-step-badge--flow3">
+                <span class="view-step-badge__icon">🔥</span>
+                <span>Step 3</span>
+              </div>
+            </div>
+            <h2>Deep Flow</h2>
+            <p class="view-desc">Tập trung sâu · Hoàn thành công việc</p>
+          </header>
+
+          <div class="timer-flow-layout">
+            <!-- Cột trái: Block cần làm -->
+            <div class="timer-blocks-panel">
+              <div class="timer-panel-header">
+                <div class="timer-panel-title">
+                  <span class="timer-panel-icon">⏰</span>
+                  <h3>Block từ Time Flow</h3>
+                </div>
+                <span class="timer-panel-hint">Chọn để focus</span>
+              </div>
+
+              <!-- Blocks từ Flow 2 -->
+              <div id="timer-work-options" class="timer-block-list">
+                <!-- Render bằng JS -->
+              </div>
+
+              <!-- Empty state -->
+              <div id="timer-no-work" class="timer-empty-blocks" hidden>
+                <div class="timer-empty-blocks__content">
+                  <span class="timer-empty-blocks__icon">⏰</span>
+                  <span class="timer-empty-blocks__title">Chưa có block nào</span>
+                  <span class="timer-empty-blocks__text">Lên lịch ở Time Flow trước</span>
+                  <button class="btn btn--outline btn--small" data-goto="blocks">
+                    ← Quay lại Time Flow
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cột phải: Timer -->
+            <div class="timer-focus-panel">
+              <div id="timer-context" class="timer-context-card" hidden>
+                <span class="timer-context__icon">🎯</span>
+                <div class="timer-context__info">
+                  <span class="timer-context__label">Đang tập trung</span>
+                  <span id="timer-context-task" class="timer-context__task"></span>
+                </div>
+              </div>
+
+              <div class="timer-display-wrapper">
+                <div class="timer-mode">
+                  <span id="mode-label">Phiên tập trung</span>
+                  <span id="mode-chip" class="timer-chip">Focus</span>
+                </div>
+                <div class="timer-ring-wrapper">
+                  <svg class="timer-ring" viewBox="0 0 100 100">
+                    <circle class="timer-ring__bg" cx="50" cy="50" r="45" />
+                    <circle id="timer-ring-progress" class="timer-ring__progress" cx="50" cy="50" r="45" />
+                  </svg>
+                  <div id="timer-display" class="timer-display">50:00</div>
+                </div>
+              </div>
+
+              <div class="timer-presets">
+                <button class="preset-btn" data-focus-preset="25">25p</button>
+                <button class="preset-btn is-active" data-focus-preset="50">50p</button>
+                <button class="preset-btn" data-focus-preset="90">90p</button>
+              </div>
+
+              <div class="timer-controls">
+                <button id="start-btn" class="btn btn--primary btn--large">Bắt đầu</button>
+                <button id="reset-btn" class="btn btn--ghost">Reset</button>
+                <button id="skip-btn" class="btn btn--ghost">Bỏ qua</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- View: Time Block Flow -->
+        <section id="view-blocks" class="view">
+          <header class="view-header view-header--flow2">
+            <div class="view-header__top">
+              <div class="view-step-badge view-step-badge--flow2">
+                <span class="view-step-badge__icon">⏰</span>
+                <span>Step 2</span>
+              </div>
+              <div id="blocks-next-hint" class="flow-next-btn" hidden>
+                <button class="btn btn--accent btn--small" data-goto="timer">
+                  Tiếp → Deep Flow
+                  <span class="btn__arrow">→</span>
+                </button>
+              </div>
+            </div>
+            <h2>Time Flow</h2>
+            <p class="view-desc">Phân bổ thời gian · Lên lịch các block tập trung</p>
+          </header>
+
+          <!-- Layout mới: Vertical stack -->
+          <div class="block-layout-vertical">
+            <!-- Phần trên: Task từ Priority Flow (compact) -->
+            <div class="block-tasks-bar">
+              <div class="block-tasks-bar__header">
+                <div class="block-tasks-bar__title">
+                  <span class="block-tasks-bar__icon">📋</span>
+                  <h3>Task chờ lên lịch</h3>
+                  <span class="block-tasks-bar__hint">Nhấn để thêm vào timeline ↓</span>
+                </div>
+                <button class="btn btn--ghost btn--small" data-goto="tasks">+ Thêm task</button>
+              </div>
+
+              <div class="block-tasks-bar__content">
+                <!-- Task items horizontal scroll -->
+                <div id="block-tasks-horizontal" class="block-tasks-horizontal">
+                  <!-- Render by JS -->
+                </div>
+
+                <!-- Empty state -->
+                <div id="block-no-tasks" class="block-tasks-bar__empty" hidden>
+                  <span>Chưa có task. </span>
+                  <button class="btn btn--outline btn--small" data-goto="tasks">Thêm ở Priority Flow</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Phần dưới: Lịch hôm nay (Full width) -->
+            <div class="block-schedule-full">
+              <div class="block-schedule-full__header">
+                <div class="block-schedule-full__title">
+                  <span class="block-schedule-full__icon">📅</span>
+                  <h3>Lịch hôm nay</h3>
+                </div>
+                <div class="block-schedule-full__meta">
+                  <span id="block-summary" class="block-schedule-full__summary"></span>
+                </div>
+              </div>
+
+              <!-- Quick add bar -->
+              <div class="block-quick-add-bar">
+                <div class="block-quick-add-bar__field">
+                  <label for="block-start">Giờ bắt đầu</label>
+                  <input id="block-start" type="time" class="block-quick-time" />
+                </div>
+                <div class="block-quick-add-bar__field block-quick-add-bar__field--grow">
+                  <label for="block-title">Tên block</label>
+                  <input id="block-title" type="text" placeholder="VD: Viết báo cáo, Meeting..." class="block-quick-title" />
+                </div>
+                <div class="block-quick-add-bar__field">
+                  <label for="block-duration">Thời lượng</label>
+                  <input id="block-duration" type="number" min="10" max="240" placeholder="30" class="block-quick-duration" />
+                  <span class="block-quick-add-bar__unit">phút</span>
+                </div>
+                <div class="block-quick-add-bar__field">
+                  <label>Màu</label>
+                  <div class="block-color-wrapper">
+                    <button type="button" class="block-color-trigger" id="block-color-trigger">
+                      <span class="block-color-trigger__preview" id="block-color-preview"></span>
+                      <span class="block-color-trigger__arrow">▼</span>
+                    </button>
+                    <div class="block-color-popup" id="block-color-popup" hidden>
+                      <div class="block-color-popup__grid" id="block-color-picker">
+                        <!-- 20 colors -->
+                        <button type="button" class="block-color-btn is-active" data-color="green" title="Xanh lá"></button>
+                        <button type="button" class="block-color-btn" data-color="emerald" title="Ngọc lục bảo"></button>
+                        <button type="button" class="block-color-btn" data-color="teal" title="Xanh lục lam"></button>
+                        <button type="button" class="block-color-btn" data-color="cyan" title="Xanh cyan"></button>
+                        <button type="button" class="block-color-btn" data-color="blue" title="Xanh dương"></button>
+                        <button type="button" class="block-color-btn" data-color="indigo" title="Chàm"></button>
+                        <button type="button" class="block-color-btn" data-color="purple" title="Tím"></button>
+                        <button type="button" class="block-color-btn" data-color="violet" title="Tím violet"></button>
+                        <button type="button" class="block-color-btn" data-color="pink" title="Hồng"></button>
+                        <button type="button" class="block-color-btn" data-color="rose" title="Hồng đậm"></button>
+                        <button type="button" class="block-color-btn" data-color="red" title="Đỏ"></button>
+                        <button type="button" class="block-color-btn" data-color="orange" title="Cam"></button>
+                        <button type="button" class="block-color-btn" data-color="amber" title="Hổ phách"></button>
+                        <button type="button" class="block-color-btn" data-color="yellow" title="Vàng"></button>
+                        <button type="button" class="block-color-btn" data-color="lime" title="Xanh chanh"></button>
+                        <button type="button" class="block-color-btn" data-color="brown" title="Nâu"></button>
+                        <button type="button" class="block-color-btn" data-color="stone" title="Đá"></button>
+                        <button type="button" class="block-color-btn" data-color="slate" title="Xám xanh"></button>
+                        <button type="button" class="block-color-btn" data-color="zinc" title="Xám"></button>
+                        <button type="button" class="block-color-btn" data-color="neutral" title="Trung tính"></button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button id="add-block-btn" class="btn btn--primary" title="Thêm block">
+                  <span>+ Thêm block</span>
+                </button>
+              </div>
+
+              <!-- Hidden field for task link -->
+              <select id="block-task-link" class="block-add-select" hidden>
+                <option value="">Chọn từ task đã thêm...</option>
+              </select>
+
+              <!-- Gantt Chart Timeline - Full width -->
+              <div class="gantt-container-full">
+                <div class="gantt-header">
+                  <span class="gantt-header__icon">📊</span>
+                  <span class="gantt-header__title">Timeline trực quan</span>
+                </div>
+                <div class="gantt-timeline-full">
+                  <div class="gantt-time-axis" id="gantt-time-axis">
+                    <!-- Time markers render by JS -->
+                  </div>
+                  <div class="gantt-now-line" id="gantt-now-line"></div>
+                  <div class="gantt-blocks" id="gantt-blocks">
+                    <!-- Blocks render by JS -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Block list details -->
+              <div class="block-list-section">
+                <div class="block-list-section__header">
+                  <span class="block-list-section__icon">📝</span>
+                  <span class="block-list-section__title">Chi tiết các block</span>
+                </div>
+                <ul id="block-list" class="block-list-grid"></ul>
+              </div>
+
+              <!-- Empty timeline -->
+              <div id="block-empty-schedule" class="block-empty-schedule-full" hidden>
+                <div class="block-empty-schedule-full__content">
+                  <span class="block-empty-schedule-full__icon">📅</span>
+                  <span class="block-empty-schedule-full__title">Chưa có block nào trong lịch</span>
+                  <span class="block-empty-schedule-full__text">Chọn task ở trên hoặc tạo block mới để bắt đầu lên lịch</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="block-footer">
+            <span id="block-meta" class="block-footer__meta">0 block</span>
+          </div>
+        </section>
+
+        <!-- View: Stats (Analytics) -->
+        <section id="view-stats" class="view">
+          <header class="view-header view-header--analytics">
+            <div class="view-header__top">
+              <div class="view-step-badge view-step-badge--analytics">
+                <span class="view-step-badge__icon">📈</span>
+                <span>Analytics</span>
+              </div>
+            </div>
+            <h2>Analytics</h2>
+            <p class="view-desc">Phân tích hiệu suất · Theo dõi tiến độ</p>
+          </header>
+
+          <!-- Analytics Cards -->
+          <div class="analytics-grid">
+            <!-- Goal Progress Card -->
+            <div class="analytics-card analytics-card--goal">
+              <div class="analytics-card__header">
+                <span class="analytics-card__icon">🎯</span>
+                <span class="analytics-card__title">Mục tiêu hôm nay</span>
+              </div>
+              <div class="analytics-card__content">
+                <div class="stat-card__ring" id="goal-ring" style="--progress: 0deg">
+                  <div class="stat-card__ring-inner">
+                    <span id="goal-progress">0/4</span>
+                    <small>phiên</small>
+                  </div>
+                </div>
+                <p id="goal-remaining" class="stat-card__message">Còn 4 phiên để đạt mục tiêu.</p>
+              </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="analytics-card">
+              <div class="analytics-card__header">
+                <span class="analytics-card__icon">⚡</span>
+                <span class="analytics-card__title">Phiên hôm nay</span>
+              </div>
+              <div class="analytics-card__value">
+                <span id="stat-today" class="analytics-number">0</span>
+                <span class="analytics-unit">phiên</span>
+              </div>
+            </div>
+
+            <div class="analytics-card">
+              <div class="analytics-card__header">
+                <span class="analytics-card__icon">⏱️</span>
+                <span class="analytics-card__title">Thời gian focus</span>
+              </div>
+              <div class="analytics-card__value">
+                <span id="stat-minutes" class="analytics-number">0</span>
+                <span class="analytics-unit">phút</span>
+              </div>
+            </div>
+
+            <div class="analytics-card analytics-card--streak">
+              <div class="analytics-card__header">
+                <span class="analytics-card__icon">🔥</span>
+                <span class="analytics-card__title">Streak</span>
+              </div>
+              <div class="analytics-card__value">
+                <span id="stat-streak" class="analytics-number">0</span>
+                <span class="analytics-unit">ngày liên tục</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weekly Chart -->
+          <div class="analytics-section">
+            <div class="analytics-section__header">
+              <span class="analytics-section__icon">📊</span>
+              <h3>Biểu đồ 7 ngày</h3>
+            </div>
+            <div id="week-chart" class="week-chart"></div>
+            <p id="week-total" class="analytics-section__summary"></p>
+          </div>
+
+          <!-- Session History -->
+          <div class="analytics-section">
+            <div class="analytics-section__header">
+              <span class="analytics-section__icon">📋</span>
+              <h3>Lịch sử phiên gần đây</h3>
+            </div>
+            <ul id="session-list" class="session-list"></ul>
+          </div>
+        </section>
+
+        <!-- View: Guide (Hướng dẫn) -->
+        <section id="view-guide" class="view">
+          <header class="view-header view-header--guide">
+            <div class="view-header__top">
+              <div class="view-step-badge view-step-badge--guide">
+                <span class="view-step-badge__icon">📖</span>
+                <span>Hướng dẫn</span>
+              </div>
+            </div>
+            <h2>Hướng dẫn sử dụng</h2>
+            <p class="view-desc">Tìm hiểu cách sử dụng FocusFlow hiệu quả</p>
+          </header>
+
+          <!-- Guide Content -->
+          <div class="guide-content">
+            <!-- Overview -->
+            <div class="guide-section guide-section--highlight">
+              <div class="guide-section__header">
+                <span class="guide-section__icon">🎯</span>
+                <h3>FocusFlow là gì?</h3>
+              </div>
+              <p class="guide-section__text">
+                FocusFlow là ứng dụng giúp bạn tập trung làm việc hiệu quả thông qua quy trình 3 bước đơn giản:
+                <strong>Xác định ưu tiên → Lên lịch → Tập trung sâu</strong>.
+              </p>
+            </div>
+
+            <!-- 3 Steps Flow -->
+            <div class="guide-section">
+              <div class="guide-section__header">
+                <span class="guide-section__icon">🔄</span>
+                <h3>Quy trình 3 bước</h3>
+              </div>
+
+              <div class="guide-steps">
+                <div class="guide-step">
+                  <div class="guide-step__number">1</div>
+                  <div class="guide-step__content">
+                    <h4>🎯 Priority Flow</h4>
+                    <p>Liệt kê tất cả việc cần làm và phân loại theo Ma trận Eisenhower:</p>
+                    <ul>
+                      <li><strong>🔥 Làm ngay:</strong> Quan trọng + Khẩn cấp</li>
+                      <li><strong>📅 Lên lịch:</strong> Quan trọng + Không gấp</li>
+                      <li><strong>👥 Ủy quyền:</strong> Không quan trọng + Khẩn cấp</li>
+                      <li><strong>🗑️ Loại bỏ:</strong> Không quan trọng + Không gấp</li>
+                    </ul>
+                    <p class="guide-tip">💡 <em>Kéo thả task giữa các ô để thay đổi độ ưu tiên</em></p>
+                  </div>
+                </div>
+
+                <div class="guide-step">
+                  <div class="guide-step__number">2</div>
+                  <div class="guide-step__content">
+                    <h4>⏰ Time Flow</h4>
+                    <p>Lên lịch các block thời gian cho từng công việc:</p>
+                    <ul>
+                      <li>Nhấn vào task ở thanh trên để tự động điền form</li>
+                      <li>Chọn giờ bắt đầu, thời lượng và màu sắc</li>
+                      <li>Xem timeline trực quan trên Gantt Chart</li>
+                      <li>Các block sẽ tự động xếp hàng nếu gần nhau</li>
+                    </ul>
+                    <p class="guide-tip">💡 <em>Chọn màu khác nhau để phân biệt loại công việc</em></p>
+                  </div>
+                </div>
+
+                <div class="guide-step">
+                  <div class="guide-step__number">3</div>
+                  <div class="guide-step__content">
+                    <h4>🔥 Deep Flow</h4>
+                    <p>Bắt đầu phiên tập trung với timer Pomodoro:</p>
+                    <ul>
+                      <li>Chọn block hoặc task muốn focus</li>
+                      <li>Chọn thời lượng: 25p, 50p hoặc 90p</li>
+                      <li>Nhấn "Bắt đầu" và tập trung hoàn toàn</li>
+                      <li>Khi hết giờ, nghỉ ngơi rồi tiếp tục</li>
+                    </ul>
+                    <p class="guide-tip">💡 <em>50 phút là thời lượng tối ưu cho deep work</em></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tips -->
+            <div class="guide-section">
+              <div class="guide-section__header">
+                <span class="guide-section__icon">💡</span>
+                <h3>Mẹo sử dụng hiệu quả</h3>
+              </div>
+
+              <div class="guide-tips-grid">
+                <div class="guide-tip-card">
+                  <span class="guide-tip-card__icon">🌅</span>
+                  <h5>Lập kế hoạch buổi sáng</h5>
+                  <p>Dành 5-10 phút đầu ngày để xác định 3 việc quan trọng nhất.</p>
+                </div>
+                <div class="guide-tip-card">
+                  <span class="guide-tip-card__icon">🎯</span>
+                  <h5>Tập trung vào Q1 & Q2</h5>
+                  <p>Ưu tiên việc "Làm ngay" và "Lên lịch" - đây là việc có impact cao nhất.</p>
+                </div>
+                <div class="guide-tip-card">
+                  <span class="guide-tip-card__icon">⏱️</span>
+                  <h5>Time blocking</h5>
+                  <p>Lên lịch cụ thể giúp não bộ chuẩn bị sẵn sàng cho công việc.</p>
+                </div>
+                <div class="guide-tip-card">
+                  <span class="guide-tip-card__icon">🔕</span>
+                  <h5>Loại bỏ xao nhãng</h5>
+                  <p>Tắt thông báo, đóng tab không cần thiết khi đang trong phiên focus.</p>
+                </div>
+                <div class="guide-tip-card">
+                  <span class="guide-tip-card__icon">☕</span>
+                  <h5>Nghỉ ngơi đúng cách</h5>
+                  <p>Đứng dậy, uống nước, nhìn xa trong thời gian break.</p>
+                </div>
+                <div class="guide-tip-card">
+                  <span class="guide-tip-card__icon">📊</span>
+                  <h5>Theo dõi tiến độ</h5>
+                  <p>Xem Analytics để biết xu hướng làm việc và điều chỉnh phù hợp.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Keyboard shortcuts -->
+            <div class="guide-section">
+              <div class="guide-section__header">
+                <span class="guide-section__icon">⌨️</span>
+                <h3>Phím tắt</h3>
+              </div>
+              <div class="guide-shortcuts">
+                <div class="guide-shortcut">
+                  <kbd>Enter</kbd>
+                  <span>Thêm task mới (khi đang nhập)</span>
+                </div>
+                <div class="guide-shortcut">
+                  <kbd>Drag & Drop</kbd>
+                  <span>Kéo thả task giữa các ô ưu tiên</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Credits -->
+            <div class="guide-section guide-section--credits">
+              <p>Made with ❤️ by <strong>GYB Agent</strong></p>
+              <p class="guide-version">FocusFlow v1.0</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- View: Settings -->
+        <section id="view-settings" class="view">
+          <header class="view-header">
+            <h2>Tùy chỉnh</h2>
+            <p class="view-desc">Điều chỉnh cho phù hợp với nhịp của bạn</p>
+          </header>
+
+          <div class="settings-sections">
+            <div class="settings-group">
+              <h3>Giao diện</h3>
+              <div class="theme-selector" id="theme-selector">
+                <button type="button" class="theme-selector__btn" data-theme-value="dark">
+                  <span class="theme-selector__icon">🌙</span>
+                  <span>Tối</span>
+                </button>
+                <button type="button" class="theme-selector__btn" data-theme-value="auto">
+                  <span class="theme-selector__icon">💻</span>
+                  <span>Tự động</span>
+                </button>
+                <button type="button" class="theme-selector__btn" data-theme-value="light">
+                  <span class="theme-selector__icon">☀️</span>
+                  <span>Sáng</span>
+                </button>
+              </div>
+              <p class="settings-hint">Tự động sẽ theo cài đặt hệ thống của bạn.</p>
+            </div>
+
+            <div class="settings-group">
+              <h3>Mục tiêu</h3>
+              <label class="settings-row">
+                <span>Số phiên mục tiêu/ngày</span>
+                <input id="goal-input" type="number" min="1" max="12" />
+              </label>
+            </div>
+
+            <div class="settings-group">
+              <h3>Thời lượng</h3>
+              <label class="settings-row">
+                <span>Focus (phút)</span>
+                <input id="focus-minutes" type="number" min="10" max="90" />
+              </label>
+              <label class="settings-row">
+                <span>Break (phút)</span>
+                <input id="break-minutes" type="number" min="3" max="30" />
+              </label>
+            </div>
+
+            <div class="settings-group">
+              <h3>Hành vi</h3>
+              <label class="settings-toggle">
+                <input id="auto-toggle" type="checkbox" />
+                <span>Tự động chuyển phiên</span>
+              </label>
+              <label class="settings-toggle">
+                <input id="sound-toggle" type="checkbox" />
+                <span>Âm báo khi hết phiên</span>
+              </label>
+              <label class="settings-toggle">
+                <input id="notify-toggle" type="checkbox" />
+                <span>Thông báo hệ thống</span>
+              </label>
+              <p id="notify-status" class="settings-hint"></p>
+            </div>
+
+            <button id="apply-settings-btn" class="btn btn--primary">Lưu cài đặt</button>
+
+            <div class="settings-group">
+              <h3>Dữ liệu</h3>
+              <div class="settings-data-actions">
+                <button id="export-data-btn" class="btn btn--outline">📤 Xuất dữ liệu</button>
+                <button id="import-data-btn" class="btn btn--outline">📥 Nhập dữ liệu</button>
+                <input id="import-file-input" type="file" accept=".json" hidden />
+              </div>
+              <p class="settings-hint">Xuất/nhập toàn bộ tasks, blocks, sessions và cài đặt.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Modal hoàn thành phiên -->
+    <div id="completion-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" hidden>
+      <div class="modal__backdrop"></div>
+      <div class="modal__content">
+        <div class="modal__header">
+          <span class="modal__icon">🎉</span>
+          <h3 id="modal-title">Hoàn thành phiên focus!</h3>
+        </div>
+        <p id="modal-message" class="modal__message">Bạn vừa hoàn thành 50 phút tập trung.</p>
+
+        <!-- Block đang làm -->
+        <div id="modal-block-section" class="modal__section" hidden>
+          <p class="modal__label">📐 Block vừa hoàn thành:</p>
+          <p id="modal-block-name" class="modal__task-name"></p>
+        </div>
+
+        <!-- Task đang làm -->
+        <div id="modal-task-section" class="modal__section" hidden>
+          <p class="modal__label">🎯 Task đang làm:</p>
+          <p id="modal-task-name" class="modal__task-name"></p>
+          <button id="modal-mark-done" class="btn btn--success btn--full">✓ Đánh dấu task hoàn thành</button>
+        </div>
+
+        <!-- Tiếp theo -->
+        <div id="modal-next-section" class="modal__section">
+          <p class="modal__label">Tiếp theo:</p>
+          <div id="modal-next-block" class="modal__next-item" hidden>
+            <span id="modal-next-block-name"></span>
+            <button id="modal-start-next-block" class="btn btn--accent btn--small">🔥 Focus</button>
+          </div>
+          <div id="modal-next-task" class="modal__next-item" hidden>
+            <span id="modal-next-task-name"></span>
+            <button id="modal-start-next-task" class="btn btn--ghost btn--small">Bắt đầu</button>
+          </div>
+          <p id="modal-no-next" class="muted" hidden>Tuyệt vời! Không còn việc nào. Nghỉ ngơi đi! 🌟</p>
+        </div>
+
+        <div class="modal__actions">
+          <button id="modal-take-break" class="btn btn--ghost">☕ Nghỉ ngơi</button>
+          <button id="modal-close" class="btn btn--primary">Đóng</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Prompt Modal -->
+    <div id="custom-prompt-modal" class="custom-modal" role="dialog" aria-modal="true" aria-labelledby="custom-prompt-title" hidden>
+      <div class="custom-modal__backdrop"></div>
+      <div class="custom-modal__content">
+        <h3 id="custom-prompt-title" class="custom-modal__title"></h3>
+        <input id="custom-prompt-input" type="text" class="custom-modal__input" autocomplete="off" />
+        <div class="custom-modal__actions">
+          <button id="custom-prompt-cancel" class="btn btn--ghost">Hủy</button>
+          <button id="custom-prompt-ok" class="btn btn--primary">Xác nhận</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="custom-confirm-modal" class="custom-modal" role="dialog" aria-modal="true" aria-labelledby="custom-confirm-title" hidden>
+      <div class="custom-modal__backdrop"></div>
+      <div class="custom-modal__content">
+        <h3 id="custom-confirm-title" class="custom-modal__title"></h3>
+        <p id="custom-confirm-message" class="custom-modal__message"></p>
+        <div class="custom-modal__actions">
+          <button id="custom-confirm-cancel" class="btn btn--ghost">Hủy</button>
+          <button id="custom-confirm-ok" class="btn btn--primary">Xác nhận</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcuts-modal" class="shortcuts-modal" hidden>
+      <div class="shortcuts-modal__backdrop"></div>
+      <div class="shortcuts-modal__content">
+        <div class="shortcuts-modal__header">
+          <div class="shortcuts-modal__title-row">
+            <span class="shortcuts-modal__icon">⌨️</span>
+            <h3>Phim tat</h3>
+          </div>
+          <button id="shortcuts-modal-close" class="shortcuts-modal__close" aria-label="Dong">&times;</button>
+        </div>
+        <div class="shortcuts-modal__grid">
+          <div class="shortcuts-modal__group">
+            <h4>Di chuyen</h4>
+            <div class="shortcuts-modal__item">
+              <div class="shortcuts-modal__keys"><kbd>1</kbd></div>
+              <span>Priority Flow</span>
+            </div>
+            <div class="shortcuts-modal__item">
+              <div class="shortcuts-modal__keys"><kbd>2</kbd></div>
+              <span>Time Flow</span>
+            </div>
+            <div class="shortcuts-modal__item">
+              <div class="shortcuts-modal__keys"><kbd>3</kbd></div>
+              <span>Deep Flow</span>
+            </div>
+            <div class="shortcuts-modal__item">
+              <div class="shortcuts-modal__keys"><kbd>4</kbd></div>
+              <span>Analytics</span>
+            </div>
+            <div class="shortcuts-modal__item">
+              <div class="shortcuts-modal__keys"><kbd>5</kbd></div>
+              <span>Settings</span>
+            </div>
+          </div>
+          <div class="shortcuts-modal__group">
+            <h4>Timer</h4>
+            <div class="shortcuts-modal__item">
+              <div class="shortcuts-modal__keys"><kbd>Space</kbd></div>
+              <span>Bat dau / Tam dung</span>
+            </div>
+          </div>
+          <div class="shortcuts-modal__group">
+            <h4>Task</h4>
+            <div class="shortcuts-modal__item">
+              <div class="shortcuts-modal__keys"><kbd>N</kbd></div>
+              <span>Them task moi</span>
+            </div>
+            <div class="shortcuts-modal__item">
+              <div class="shortcuts-modal__keys"><kbd>Enter</kbd></div>
+              <span>Xac nhan them task</span>
+            </div>
+          </div>
+          <div class="shortcuts-modal__group">
+            <h4>Chung</h4>
+            <div class="shortcuts-modal__item">
+              <div class="shortcuts-modal__keys"><kbd>?</kbd></div>
+              <span>Mo phim tat</span>
+            </div>
+            <div class="shortcuts-modal__item">
+              <div class="shortcuts-modal__keys"><kbd>Ctrl</kbd><span class="shortcuts-modal__plus">+</span><kbd>Z</kbd></div>
+              <span>Hoan tac</span>
+            </div>
+            <div class="shortcuts-modal__item">
+              <div class="shortcuts-modal__keys"><kbd>Esc</kbd></div>
+              <span>Dong modal / popup</span>
+            </div>
+          </div>
+        </div>
+        <div class="shortcuts-modal__footer">
+          <span>Nhan <kbd>Esc</kbd> de dong</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PWA Install Banner -->
+    <div id="pwa-install-banner" class="pwa-install-banner" hidden>
+      <div class="pwa-install-banner__content">
+        <div class="pwa-install-banner__icon">🎯</div>
+        <div class="pwa-install-banner__text">
+          <strong>Cai dat FocusFlow</strong>
+          <span>Truy cap nhanh hon, hoat dong offline</span>
+        </div>
+      </div>
+      <div class="pwa-install-banner__actions">
+        <button id="pwa-install-dismiss" class="btn btn--ghost btn--small">De sau</button>
+        <button id="pwa-install-btn" class="btn btn--accent btn--small">Cai dat</button>
+      </div>
+    </div>
+
+    <!-- PWA Update Banner -->
+    <div id="pwa-update-banner" class="pwa-update-banner" hidden>
+      <div class="pwa-update-banner__content">
+        <span class="pwa-update-banner__icon">🔄</span>
+        <span>Phien ban moi da san sang!</span>
+      </div>
+      <button id="pwa-update-btn" class="btn btn--accent btn--small">Cap nhat</button>
+    </div>
+
+    <!-- Offline Indicator -->
+    <div id="offline-indicator" class="offline-indicator" hidden>
+      <span class="offline-indicator__icon">📡</span>
+      <span class="offline-indicator__text">Dang offline</span>
+    </div>
+
+    <script src="app.js" defer></script>
+
+    <!-- Service Worker Registration & PWA Logic -->
+    <script>
+      // ============================================================
+      // SERVICE WORKER REGISTRATION
+      // ============================================================
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', async () => {
+          try {
+            const registration = await navigator.serviceWorker.register('/sw.js', {
+              scope: '/',
+            });
+
+            console.log('[PWA] Service Worker registered, scope:', registration.scope);
+
+            // Check for updates on page load
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              if (!newWorker) return;
+
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New version available, show update banner
+                  showUpdateBanner(registration);
+                }
+              });
+            });
+
+            // Periodically check for updates (every 60 minutes)
+            setInterval(() => {
+              registration.update();
+            }, 60 * 60 * 1000);
+
+            // Register for background sync if supported
+            if ('sync' in registration) {
+              try {
+                await registration.sync.register('focusflow-sync');
+              } catch (err) {
+                console.log('[PWA] Background sync registration failed:', err);
+              }
+            }
+
+            // Register for periodic background sync if supported
+            if ('periodicSync' in registration) {
+              try {
+                const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
+                if (status.state === 'granted') {
+                  await registration.periodicSync.register('focusflow-periodic-sync', {
+                    minInterval: 24 * 60 * 60 * 1000, // 24 hours
+                  });
+                }
+              } catch (err) {
+                console.log('[PWA] Periodic sync registration failed:', err);
+              }
+            }
+          } catch (err) {
+            console.error('[PWA] Service Worker registration failed:', err);
+          }
+        });
+
+        // Listen for messages from service worker
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          const { type, version } = event.data || {};
+
+          switch (type) {
+            case 'SW_ACTIVATED':
+              console.log('[PWA] Service Worker activated, version:', version);
+              break;
+
+            case 'SW_UPDATE_AVAILABLE':
+              console.log('[PWA] Content update detected');
+              // Show a subtle notification that content has been updated
+              if (typeof showToast === 'function') {
+                showToast('Noi dung da duoc cap nhat. Tai lai de xem phien ban moi.', 'info', 5000);
+              }
+              break;
+
+            case 'SYNC_COMPLETE':
+              console.log('[PWA] Background sync completed');
+              break;
+          }
+        });
+      }
+
+      // ============================================================
+      // PWA INSTALL PROMPT
+      // ============================================================
+      let deferredInstallPrompt = null;
+      const INSTALL_DISMISS_KEY = 'focusflow_install_dismissed';
+      const INSTALL_DISMISS_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+      window.addEventListener('beforeinstallprompt', (event) => {
+        // Prevent the default mini-infobar
+        event.preventDefault();
+        deferredInstallPrompt = event;
+
+        // Check if user previously dismissed
+        const dismissedAt = localStorage.getItem(INSTALL_DISMISS_KEY);
+        if (dismissedAt) {
+          const elapsed = Date.now() - parseInt(dismissedAt, 10);
+          if (elapsed < INSTALL_DISMISS_DURATION) {
+            return; // Still within dismiss cooldown
+          }
+          localStorage.removeItem(INSTALL_DISMISS_KEY);
+        }
+
+        // Show custom install banner after a delay (don't interrupt immediately)
+        setTimeout(() => {
+          showInstallBanner();
+        }, 30000); // 30 seconds delay
+      });
+
+      window.addEventListener('appinstalled', () => {
+        console.log('[PWA] App installed successfully');
+        deferredInstallPrompt = null;
+        hideInstallBanner();
+
+        if (typeof showToast === 'function') {
+          showToast('FocusFlow da duoc cai dat thanh cong!', 'success');
+        }
+
+        // Track installation
+        try {
+          const installData = {
+            installedAt: new Date().toISOString(),
+            platform: navigator.userAgentData?.platform || navigator.platform || 'unknown',
+          };
+          localStorage.setItem('focusflow_pwa_installed', JSON.stringify(installData));
+        } catch (err) {
+          // ignore
+        }
+      });
+
+      function showInstallBanner() {
+        const banner = document.getElementById('pwa-install-banner');
+        if (!banner || !deferredInstallPrompt) return;
+        banner.hidden = false;
+        requestAnimationFrame(() => {
+          banner.classList.add('is-visible');
+        });
+      }
+
+      function hideInstallBanner() {
+        const banner = document.getElementById('pwa-install-banner');
+        if (!banner) return;
+        banner.classList.remove('is-visible');
+        setTimeout(() => {
+          banner.hidden = true;
+        }, 300);
+      }
+
+      // Install button
+      const installBtn = document.getElementById('pwa-install-btn');
+      if (installBtn) {
+        installBtn.addEventListener('click', async () => {
+          if (!deferredInstallPrompt) return;
+
+          hideInstallBanner();
+
+          try {
+            deferredInstallPrompt.prompt();
+            const { outcome } = await deferredInstallPrompt.userChoice;
+            console.log('[PWA] Install prompt outcome:', outcome);
+
+            if (outcome === 'dismissed') {
+              localStorage.setItem(INSTALL_DISMISS_KEY, String(Date.now()));
+            }
+          } catch (err) {
+            console.error('[PWA] Install prompt error:', err);
+          }
+
+          deferredInstallPrompt = null;
+        });
+      }
+
+      // Dismiss button
+      const dismissBtn = document.getElementById('pwa-install-dismiss');
+      if (dismissBtn) {
+        dismissBtn.addEventListener('click', () => {
+          hideInstallBanner();
+          localStorage.setItem(INSTALL_DISMISS_KEY, String(Date.now()));
+          deferredInstallPrompt = null;
+        });
+      }
+
+      // ============================================================
+      // PWA UPDATE BANNER
+      // ============================================================
+      function showUpdateBanner(registration) {
+        const banner = document.getElementById('pwa-update-banner');
+        if (!banner) return;
+
+        banner.hidden = false;
+        requestAnimationFrame(() => {
+          banner.classList.add('is-visible');
+        });
+
+        const updateBtn = document.getElementById('pwa-update-btn');
+        if (updateBtn) {
+          updateBtn.addEventListener('click', () => {
+            if (registration.waiting) {
+              registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+            banner.classList.remove('is-visible');
+            setTimeout(() => {
+              banner.hidden = true;
+              window.location.reload();
+            }, 300);
+          }, { once: true });
+        }
+      }
+
+      // ============================================================
+      // OFFLINE / ONLINE INDICATOR
+      // ============================================================
+      const offlineIndicator = document.getElementById('offline-indicator');
+
+      function updateOnlineStatus() {
+        if (!offlineIndicator) return;
+
+        if (!navigator.onLine) {
+          offlineIndicator.hidden = false;
+          requestAnimationFrame(() => {
+            offlineIndicator.classList.add('is-visible');
+          });
+        } else {
+          offlineIndicator.classList.remove('is-visible');
+          setTimeout(() => {
+            offlineIndicator.hidden = true;
+          }, 300);
+        }
+      }
+
+      window.addEventListener('online', () => {
+        updateOnlineStatus();
+        if (typeof showToast === 'function') {
+          showToast('Da ket noi lai internet', 'success', 2500);
+        }
+      });
+
+      window.addEventListener('offline', () => {
+        updateOnlineStatus();
+        if (typeof showToast === 'function') {
+          showToast('Mat ket noi internet. Du lieu van duoc luu tru dia.', 'warning', 4000);
+        }
+      });
+
+      // Check initial status
+      updateOnlineStatus();
+
+      // ============================================================
+      // HANDLE SHORTCUT DEEP LINKS (?view=tasks, etc.)
+      // ============================================================
+      window.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const viewParam = params.get('view');
+        if (viewParam && typeof navigateTo === 'function') {
+          // Small delay to ensure app is booted
+          setTimeout(() => {
+            navigateTo(viewParam);
+          }, 100);
+        }
+      });
+    </script>
+  </body>
+</html>

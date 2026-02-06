@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Full background for maskable safe zone -->
+  <rect width="512" height="512" fill="#0a0f0d"/>
+  <!-- Outer ring (scaled to fit in safe zone - 80% of original) -->
+  <circle cx="256" cy="256" r="144" fill="none" stroke="#2d3b33" stroke-width="20"/>
+  <!-- Middle ring -->
+  <circle cx="256" cy="256" r="104" fill="none" stroke="#d4b872" stroke-width="16" opacity="0.3"/>
+  <!-- Inner ring -->
+  <circle cx="256" cy="256" r="64" fill="none" stroke="#d4b872" stroke-width="12" opacity="0.6"/>
+  <!-- Bullseye center -->
+  <circle cx="256" cy="256" r="28" fill="#d4b872"/>
+  <!-- Top crosshair -->
+  <line x1="256" y1="92" x2="256" y2="144" stroke="#d4b872" stroke-width="6" stroke-linecap="round"/>
+  <!-- Bottom crosshair -->
+  <line x1="256" y1="368" x2="256" y2="420" stroke="#d4b872" stroke-width="6" stroke-linecap="round"/>
+  <!-- Left crosshair -->
+  <line x1="92" y1="256" x2="144" y2="256" stroke="#d4b872" stroke-width="6" stroke-linecap="round"/>
+  <!-- Right crosshair -->
+  <line x1="368" y1="256" x2="420" y2="256" stroke="#d4b872" stroke-width="6" stroke-linecap="round"/>
+</svg>
