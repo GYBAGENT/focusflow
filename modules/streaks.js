@@ -381,3 +381,18 @@ const StreakModule = {
 
 // Auto-load on script load
 StreakModule.load();
+
+// Auto-render widget when DOM is ready
+(function() {
+  function renderWidget() {
+    var el = document.getElementById('streak-widget');
+    if (el && el.children.length === 0) {
+      StreakModule.renderStreakWidget();
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderWidget);
+  } else {
+    setTimeout(renderWidget, 50);
+  }
+})();

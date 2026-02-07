@@ -386,3 +386,17 @@ const SharingModule = {
     }
   },
 };
+
+// Auto-init when script loads
+(function() {
+  function autoInit() {
+    if (!document.querySelector('.share-section')) {
+      SharingModule.init();
+    }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', autoInit);
+  } else {
+    setTimeout(autoInit, 50);
+  }
+})();
