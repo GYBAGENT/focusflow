@@ -1100,6 +1100,14 @@ function handleSessionComplete() {
   // Hiện modal TRƯỚC khi reset active context
   announceSessionComplete(completedMode);
 
+  // === Module Hook: Post-session reflection ===
+  if (completedMode === "focus") {
+    const lastSession = sessions[0];
+    if (lastSession && typeof ReflectionModule !== "undefined" && ReflectionModule.showPrompt) {
+      try { ReflectionModule.showPrompt(lastSession.id, lastSession.type); } catch (e) { console.warn("[Modules] Reflection error:", e); }
+    }
+  }
+
   // Reset active context SAU khi modal đã lấy thông tin
   if (completedMode === "focus") {
     activeBlockId = null;
@@ -1127,8 +1135,10 @@ function recordSession(type, durationMinutes) {
     if (block) contextLabel = block.title;
   }
 
+  const sessionId = crypto.randomUUID();
+
   sessions.unshift({
-    id: crypto.randomUUID(),
+    id: sessionId,
     durationMinutes,
     completedAt: Date.now(),
     type,
@@ -1140,6 +1150,18 @@ function recordSession(type, durationMinutes) {
   saveSessions();
   renderSessions();
   refreshInsights();
+
+  // === Module Hooks: Streak + Achievement ===
+  if (type === "focus") {
+    // Update streak
+    if (typeof StreakModule !== "undefined" && StreakModule.recordActivity) {
+      try { StreakModule.recordActivity(); } catch (e) { console.warn("[Modules] Streak error:", e); }
+    }
+    // Check achievements
+    if (typeof AchievementModule !== "undefined" && AchievementModule.checkSession) {
+      try { AchievementModule.checkSession(type, durationMinutes); } catch (e) { console.warn("[Modules] Achievement error:", e); }
+    }
+  }
 }
 
 function getQuadrant(task) {
@@ -1584,6 +1606,11 @@ function toggleTask(taskId) {
   // Play sound khi hoàn thành task (chỉ khi từ chưa done → done)
   if (!wasDone && settings.soundOn) {
     playSuccessSound();
+  }
+
+  // === Module Hook: Check task achievements ===
+  if (!wasDone && typeof AchievementModule !== "undefined" && AchievementModule.checkTaskCompletion) {
+    try { AchievementModule.checkTaskCompletion(); } catch (e) { console.warn("[Modules] Achievement task error:", e); }
   }
 }
 
@@ -3254,6 +3281,24 @@ function bootApp() {
 
   // Auto-refresh trạng thái mỗi phút
   startAutoRefresh();
+
+  // === Initialize Premium Modules ===
+  // Modules are loaded via defer scripts AFTER app.js, so we use load event
+  // to ensure all module globals are available
+  window.addEventListener("load", function initModules() {
+    try {
+      // Streak module — render widget in sidebar
+      if (typeof StreakModule !== "undefined" && StreakModule.renderStreakWidget) {
+        StreakModule.renderStreakWidget();
+      }
+      // Sharing module — init (adds share button to analytics)
+      if (typeof SharingModule !== "undefined" && SharingModule.init) {
+        SharingModule.init();
+      }
+    } catch (e) {
+      console.warn("[Modules] Init error:", e);
+    }
+  });
 
   // Start on tasks (bước 1: Priority Task Flow - xác định việc cần làm)
   navigateTo("tasks");

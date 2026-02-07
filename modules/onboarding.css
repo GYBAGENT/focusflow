@@ -1,0 +1,532 @@
+/* ============================================================
+   ONBOARDING SYSTEM — FocusFlow
+   Self-contained overlay tutorial for first-time users.
+   BEM naming: .onboarding__*
+   ============================================================ */
+
+/* -------------------- Custom Properties -------------------- */
+.onboarding__overlay {
+  --onboarding-backdrop: rgba(0, 0, 0, 0.85);
+  --onboarding-card-bg: rgba(26, 36, 32, 0.85);
+  --onboarding-card-border: rgba(212, 184, 114, 0.15);
+  --onboarding-radius: 20px;
+  --onboarding-dot-size: 10px;
+  --onboarding-transition: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --onboarding-slide-distance: 60px;
+}
+
+[data-theme="light"] .onboarding__overlay {
+  --onboarding-backdrop: rgba(0, 0, 0, 0.6);
+  --onboarding-card-bg: rgba(255, 255, 255, 0.88);
+  --onboarding-card-border: rgba(154, 123, 47, 0.2);
+}
+
+/* -------------------- Overlay -------------------- */
+.onboarding__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--onboarding-backdrop);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--onboarding-transition),
+    visibility var(--onboarding-transition);
+  padding: 20px;
+}
+
+.onboarding__overlay.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Entry animation */
+.onboarding__overlay.is-entering {
+  opacity: 0;
+}
+
+.onboarding__overlay.is-entering .onboarding__card {
+  transform: scale(0.9) translateY(20px);
+  opacity: 0;
+}
+
+/* Exit animation */
+.onboarding__overlay.is-exiting .onboarding__card {
+  transform: scale(0.92) translateY(10px);
+  opacity: 0;
+}
+
+/* -------------------- Card (Glassmorphism) -------------------- */
+.onboarding__card {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  max-height: 85vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--onboarding-card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--onboarding-card-border);
+  border-radius: var(--onboarding-radius);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  transform: scale(1) translateY(0);
+  opacity: 1;
+  transition:
+    transform var(--onboarding-transition),
+    opacity var(--onboarding-transition);
+}
+
+/* -------------------- Steps Container -------------------- */
+.onboarding__steps {
+  position: relative;
+  overflow: hidden;
+}
+
+/* -------------------- Individual Step -------------------- */
+.onboarding__step {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 48px 40px 32px;
+  opacity: 0;
+  transform: translateX(var(--onboarding-slide-distance));
+  transition:
+    opacity var(--onboarding-transition),
+    transform var(--onboarding-transition);
+}
+
+.onboarding__step.is-active {
+  display: flex;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Slide-out to left when going forward */
+.onboarding__step.is-exiting-left {
+  display: flex;
+  opacity: 0;
+  transform: translateX(calc(var(--onboarding-slide-distance) * -1));
+}
+
+/* Slide-out to right when going backward (future use) */
+.onboarding__step.is-exiting-right {
+  display: flex;
+  opacity: 0;
+  transform: translateX(var(--onboarding-slide-distance));
+}
+
+/* -------------------- Step Icon -------------------- */
+.onboarding__icon {
+  font-size: 56px;
+  line-height: 1;
+  margin-bottom: 16px;
+  animation: onboarding-icon-pop 400ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: 150ms;
+}
+
+@keyframes onboarding-icon-pop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* -------------------- Step Title -------------------- */
+.onboarding__title {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text, #f2ede4);
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+
+/* -------------------- Step Description -------------------- */
+.onboarding__desc {
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-secondary, #b8b3aa);
+  max-width: 440px;
+  margin-bottom: 24px;
+}
+
+/* -------------------- Step Illustration -------------------- */
+.onboarding__illustration {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 8px;
+}
+
+[data-theme="light"] .onboarding__illustration {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+/* Illustration: Quadrant grid */
+.onboarding__quadrant-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.onboarding__quadrant-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text, #f2ede4);
+}
+
+.onboarding__quadrant-item--do {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.onboarding__quadrant-item--schedule {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.onboarding__quadrant-item--delegate {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.onboarding__quadrant-item--eliminate {
+  background: rgba(107, 114, 128, 0.12);
+  border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+/* Illustration: Timeline */
+.onboarding__timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.onboarding__timeline-bar {
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.onboarding__timeline-bar--1 {
+  width: 70%;
+  background: linear-gradient(135deg, rgba(90, 158, 118, 0.7), rgba(90, 158, 118, 0.4));
+}
+
+.onboarding__timeline-bar--2 {
+  width: 45%;
+  margin-left: 25%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.7), rgba(59, 130, 246, 0.4));
+}
+
+.onboarding__timeline-bar--3 {
+  width: 55%;
+  margin-left: 45%;
+  background: linear-gradient(135deg, rgba(212, 184, 114, 0.7), rgba(212, 184, 114, 0.4));
+}
+
+/* Illustration: Pomodoro cycle */
+.onboarding__pomodoro {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.onboarding__pomodoro-phase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.onboarding__pomodoro-phase--focus {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.onboarding__pomodoro-phase--break {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
+.onboarding__pomodoro-arrow {
+  font-size: 18px;
+  color: var(--text-muted, #7a756c);
+}
+
+/* Illustration: Summary features list */
+.onboarding__features {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.onboarding__feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(212, 184, 114, 0.06);
+  border: 1px solid rgba(212, 184, 114, 0.1);
+  font-size: 13px;
+  color: var(--text, #f2ede4);
+}
+
+.onboarding__feature-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* -------------------- Navigation Footer -------------------- */
+.onboarding__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 40px 32px;
+  gap: 16px;
+}
+
+/* -------------------- Progress Dots -------------------- */
+.onboarding__dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.onboarding__dot {
+  width: var(--onboarding-dot-size);
+  height: var(--onboarding-dot-size);
+  border-radius: 50%;
+  background: var(--text-muted, #7a756c);
+  opacity: 0.35;
+  transition:
+    background var(--onboarding-transition),
+    opacity var(--onboarding-transition),
+    transform var(--onboarding-transition);
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+
+.onboarding__dot:hover {
+  opacity: 0.6;
+  transform: scale(1.15);
+}
+
+.onboarding__dot.is-active {
+  background: var(--accent, #d4b872);
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.onboarding__dot.is-completed {
+  background: var(--accent-2, #5a9e76);
+  opacity: 0.7;
+}
+
+/* -------------------- Buttons -------------------- */
+.onboarding__btn-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 10px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--accent, #d4b872);
+  color: #0a0f0d;
+  transition:
+    background var(--onboarding-transition),
+    transform 150ms ease,
+    box-shadow var(--onboarding-transition);
+}
+
+.onboarding__btn-next:hover {
+  background: #e0c882;
+  box-shadow: 0 4px 20px rgba(212, 184, 114, 0.3);
+}
+
+.onboarding__btn-next:active {
+  transform: scale(0.97);
+}
+
+/* Final step CTA */
+.onboarding__btn-next--start {
+  padding: 12px 32px;
+  font-size: 15px;
+}
+
+.onboarding__btn-arrow {
+  font-size: 16px;
+  transition: transform 150ms ease;
+}
+
+.onboarding__btn-next:hover .onboarding__btn-arrow {
+  transform: translateX(3px);
+}
+
+/* Skip link */
+.onboarding__btn-skip {
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--text-muted, #7a756c);
+  cursor: pointer;
+  transition: color var(--onboarding-transition);
+  text-decoration: none;
+}
+
+.onboarding__btn-skip:hover {
+  color: var(--text-secondary, #b8b3aa);
+}
+
+/* -------------------- Scrollbar Styling -------------------- */
+.onboarding__card::-webkit-scrollbar {
+  width: 4px;
+}
+
+.onboarding__card::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.onboarding__card::-webkit-scrollbar-thumb {
+  background: var(--border, #2d3b33);
+  border-radius: 4px;
+}
+
+/* -------------------- Responsive: Mobile -------------------- */
+@media (max-width: 768px) {
+  .onboarding__overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .onboarding__card {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .onboarding__step {
+    padding: 36px 24px 24px;
+  }
+
+  .onboarding__icon {
+    font-size: 44px;
+  }
+
+  .onboarding__title {
+    font-size: 20px;
+  }
+
+  .onboarding__desc {
+    font-size: 14px;
+  }
+
+  .onboarding__footer {
+    padding: 12px 24px 24px;
+  }
+
+  .onboarding__illustration {
+    padding: 14px;
+  }
+
+  .onboarding__quadrant-item {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .onboarding__timeline-bar {
+    height: 24px;
+    font-size: 11px;
+  }
+
+  .onboarding__pomodoro-phase {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .onboarding__feature-item {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 400px) {
+  .onboarding__step {
+    padding: 28px 18px 18px;
+  }
+
+  .onboarding__footer {
+    padding: 10px 18px 20px;
+  }
+
+  .onboarding__btn-next {
+    padding: 9px 18px;
+    font-size: 13px;
+  }
+}
+
+/* -------------------- Reduced Motion -------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .onboarding__overlay,
+  .onboarding__card,
+  .onboarding__step,
+  .onboarding__dot,
+  .onboarding__btn-next,
+  .onboarding__btn-skip,
+  .onboarding__icon {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+
+  .onboarding__step.is-active {
+    transform: none;
+  }
+
+  .onboarding__step.is-exiting-left,
+  .onboarding__step.is-exiting-right {
+    transform: none;
+  }
+}

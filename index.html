@@ -26,7 +26,27 @@
     <meta name="msapplication-TileColor" content="#0a0f0d" />
     <meta name="msapplication-TileImage" content="icons/icon-144.png" />
 
+    <!-- Open Graph / Social Sharing -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="FocusFlow — Ứng dụng tập trung" />
+    <meta property="og:description" content="Tập trung làm việc hiệu quả với quy trình 3 bước: Xác định ưu tiên, Lên lịch, Tập trung sâu." />
+    <meta property="og:image" content="https://gybagent.github.io/focusflow/og-image.png" />
+    <meta property="og:url" content="https://gybagent.github.io/focusflow/" />
+    <meta property="og:site_name" content="FocusFlow" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="FocusFlow — Ứng dụng tập trung" />
+    <meta name="twitter:description" content="Tập trung làm việc hiệu quả với quy trình 3 bước." />
+    <meta name="twitter:image" content="https://gybagent.github.io/focusflow/og-image.png" />
+
     <link rel="stylesheet" href="styles.css" />
+
+    <!-- Module Stylesheets -->
+    <link rel="stylesheet" href="modules/onboarding.css" />
+    <link rel="stylesheet" href="modules/gamification.css" />
+    <link rel="stylesheet" href="modules/sounds.css" />
+    <link rel="stylesheet" href="modules/sharing.css" />
     <script>
       // Theme initialization — runs before first paint to prevent flash of wrong theme
       (function() {
@@ -60,7 +80,7 @@
           <!-- 3 Flow chính -->
           <li class="nav-section-label">Flow</li>
           <li>
-            <button class="nav-item nav-item--flow is-active" data-view="tasks" data-step="1">
+            <button class="nav-item nav-item--flow is-active" data-view="tasks" data-step="1" aria-label="Bước 1: Priority Flow — Xác định việc ưu tiên">
               <span class="nav-step">1</span>
               <span class="nav-icon">🎯</span>
               <span class="nav-label">Priority Flow</span>
@@ -68,7 +88,7 @@
             </button>
           </li>
           <li>
-            <button class="nav-item nav-item--flow" data-view="blocks" data-step="2">
+            <button class="nav-item nav-item--flow" data-view="blocks" data-step="2" aria-label="Bước 2: Time Flow — Lên lịch thời gian">
               <span class="nav-step">2</span>
               <span class="nav-icon">⏰</span>
               <span class="nav-label">Time Flow</span>
@@ -76,7 +96,7 @@
             </button>
           </li>
           <li>
-            <button class="nav-item nav-item--flow" data-view="timer" data-step="3">
+            <button class="nav-item nav-item--flow" data-view="timer" data-step="3" aria-label="Bước 3: Deep Flow — Tập trung sâu">
               <span class="nav-step">3</span>
               <span class="nav-icon">🔥</span>
               <span class="nav-label">Deep Flow</span>
@@ -87,13 +107,13 @@
           <!-- Phần phụ trợ -->
           <li class="nav-section-label">Insights</li>
           <li>
-            <button class="nav-item" data-view="dashboard">
+            <button class="nav-item" data-view="dashboard" aria-label="Home — Tổng quan">
               <span class="nav-icon">🏠</span>
               <span class="nav-label">Home</span>
             </button>
           </li>
           <li>
-            <button class="nav-item" data-view="stats">
+            <button class="nav-item" data-view="stats" aria-label="Analytics — Phân tích hiệu suất">
               <span class="nav-icon">📈</span>
               <span class="nav-label">Analytics</span>
             </button>
@@ -102,18 +122,21 @@
           <!-- Phần hỗ trợ -->
           <li class="nav-section-label">Support</li>
           <li>
-            <button class="nav-item" data-view="guide">
+            <button class="nav-item" data-view="guide" aria-label="Hướng dẫn sử dụng">
               <span class="nav-icon">📖</span>
               <span class="nav-label">Hướng dẫn</span>
             </button>
           </li>
           <li>
-            <button class="nav-item" data-view="settings">
+            <button class="nav-item" data-view="settings" aria-label="Cài đặt ứng dụng">
               <span class="nav-icon">⚙️</span>
               <span class="nav-label">Settings</span>
             </button>
           </li>
         </ul>
+
+        <!-- Streak Widget -->
+        <div id="streak-widget" class="nav-streak-widget"></div>
 
         <!-- Mini progress ở sidebar -->
         <div class="nav-progress">
@@ -1081,6 +1104,14 @@
     </div>
 
     <script src="app.js" defer></script>
+
+    <!-- Premium Modules -->
+    <script src="modules/onboarding.js" defer></script>
+    <script src="modules/streaks.js" defer></script>
+    <script src="modules/achievements.js" defer></script>
+    <script src="modules/sounds.js" defer></script>
+    <script src="modules/sharing.js" defer></script>
+    <script src="modules/reflection.js" defer></script>
 
     <!-- Service Worker Registration & PWA Logic -->
     <script>

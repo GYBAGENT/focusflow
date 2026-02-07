@@ -1,0 +1,653 @@
+/* ============================================================
+   SHARING + REFLECTION SYSTEM — FocusFlow
+   Shareable focus cards, reflection prompts, and history.
+   BEM naming: .share-*, .reflection-*, .mood-*
+   ============================================================ */
+
+/* -------------------- Custom Properties -------------------- */
+:root {
+  --share-radius: 16px;
+  --share-transition: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --reflection-radius: 16px;
+}
+
+/* ==================== SHARE BUTTON ==================== */
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent, #d4b872);
+  color: var(--bg, #0a0f0d);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--share-transition),
+    transform 150ms ease,
+    box-shadow var(--share-transition);
+  box-shadow: 0 2px 12px rgba(212, 184, 114, 0.15);
+}
+
+.share-btn:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 20px rgba(212, 184, 114, 0.25);
+}
+
+.share-btn:active {
+  transform: scale(0.97);
+}
+
+/* ==================== SHARE MODAL ==================== */
+
+.share-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: shareModalFadeIn 200ms ease forwards;
+}
+
+.share-modal[hidden] {
+  display: none;
+}
+
+@keyframes shareModalFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes shareModalContentIn {
+  from { opacity: 0; transform: scale(0.92) translateY(10px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+@keyframes shareModalContentOut {
+  from { opacity: 1; transform: scale(1)    translateY(0); }
+  to   { opacity: 0; transform: scale(0.92) translateY(10px); }
+}
+
+.share-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--modal-backdrop, rgba(0, 0, 0, 0.75));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.share-modal__content {
+  position: relative;
+  background: var(--surface, #1a2420);
+  border: 1px solid var(--border, #2d3b33);
+  border-radius: var(--share-radius);
+  padding: 28px;
+  max-width: 680px;
+  width: 100%;
+  animation: shareModalContentIn 250ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+
+.share-modal.is-closing .share-modal__content {
+  animation: shareModalContentOut 180ms ease forwards;
+}
+
+.share-modal.is-closing .share-modal__backdrop {
+  animation: shareModalFadeIn 180ms ease reverse forwards;
+}
+
+/* Header */
+.share-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.share-modal__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text, #f2ede4);
+}
+
+.share-modal__close {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface-2, #243029);
+  color: var(--text-muted, #7a756c);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background var(--share-transition),
+    color var(--share-transition);
+}
+
+.share-modal__close:hover {
+  background: var(--border, #2d3b33);
+  color: var(--text, #f2ede4);
+}
+
+/* Card Preview */
+.share-card {
+  width: 100%;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border, #2d3b33);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.share-card canvas,
+.share-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Actions */
+.share-modal__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.share-modal__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border: 1px solid var(--border, #2d3b33);
+  border-radius: 999px;
+  background: var(--surface, #1a2420);
+  color: var(--text, #f2ede4);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--share-transition),
+    border-color var(--share-transition),
+    transform 150ms ease;
+}
+
+.share-modal__btn:hover {
+  background: var(--surface-2, #243029);
+  border-color: var(--border-light, #3d4f44);
+}
+
+.share-modal__btn:active {
+  transform: scale(0.97);
+}
+
+.share-modal__btn--primary {
+  background: var(--accent, #d4b872);
+  color: var(--bg, #0a0f0d);
+  border-color: transparent;
+}
+
+.share-modal__btn--primary:hover {
+  filter: brightness(1.1);
+  background: var(--accent, #d4b872);
+}
+
+/* ==================== REFLECTION MODAL ==================== */
+
+.reflection-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: reflectionModalFadeIn 250ms ease forwards;
+}
+
+.reflection-modal[hidden] {
+  display: none;
+}
+
+@keyframes reflectionModalFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes reflectionModalContentIn {
+  from { opacity: 0; transform: scale(0.92) translateY(12px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+@keyframes reflectionModalContentOut {
+  from { opacity: 1; transform: scale(1)    translateY(0); }
+  to   { opacity: 0; transform: scale(0.92) translateY(12px); }
+}
+
+.reflection-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--modal-backdrop, rgba(0, 0, 0, 0.75));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.reflection-modal__content {
+  position: relative;
+  background: var(--surface, #1a2420);
+  border: 1px solid var(--border, #2d3b33);
+  border-radius: var(--reflection-radius);
+  padding: 32px 28px;
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+  animation: reflectionModalContentIn 300ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+
+.reflection-modal.is-closing .reflection-modal__content {
+  animation: reflectionModalContentOut 180ms ease forwards;
+}
+
+.reflection-modal.is-closing .reflection-modal__backdrop {
+  animation: reflectionModalFadeIn 180ms ease reverse forwards;
+}
+
+/* Header */
+.reflection-modal__icon {
+  font-size: 2.4rem;
+  line-height: 1;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.reflection-modal__title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text, #f2ede4);
+  margin-bottom: 6px;
+}
+
+.reflection-modal__subtitle {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #b8b3aa);
+  margin-bottom: 24px;
+}
+
+/* Mood Selection */
+.mood-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.mood-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 16px;
+  min-width: 90px;
+  border: 1px solid var(--border, #2d3b33);
+  border-radius: 12px;
+  background: var(--surface-2, #243029);
+  color: var(--text-secondary, #b8b3aa);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--share-transition),
+    border-color var(--share-transition),
+    color var(--share-transition),
+    transform 150ms ease,
+    box-shadow var(--share-transition);
+}
+
+.mood-btn__icon {
+  font-size: 1.6rem;
+  line-height: 1;
+  transition: transform 150ms ease;
+}
+
+.mood-btn:hover {
+  background: var(--bg-2, #111916);
+  border-color: var(--border-light, #3d4f44);
+  color: var(--text, #f2ede4);
+}
+
+.mood-btn:hover .mood-btn__icon {
+  transform: scale(1.12);
+}
+
+.mood-btn:active {
+  transform: scale(0.95);
+}
+
+.mood-btn.is-selected {
+  border-color: var(--accent, #d4b872);
+  background: rgba(212, 184, 114, 0.08);
+  color: var(--text, #f2ede4);
+  box-shadow: 0 0 0 1px var(--accent, #d4b872);
+}
+
+.mood-btn.is-selected .mood-btn__icon {
+  transform: scale(1.1);
+}
+
+/* Textarea */
+.reflection-modal__textarea {
+  width: 100%;
+  min-height: 80px;
+  max-height: 160px;
+  padding: 12px 14px;
+  background: var(--bg-2, #111916);
+  border: 1px solid var(--border, #2d3b33);
+  border-radius: 10px;
+  color: var(--text, #f2ede4);
+  font-size: 0.9rem;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+  transition: border-color 150ms ease;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.reflection-modal__textarea:focus {
+  border-color: var(--accent, #d4b872);
+}
+
+.reflection-modal__textarea::placeholder {
+  color: var(--text-muted, #7a756c);
+}
+
+/* Actions */
+.reflection-modal__actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.reflection-modal__btn {
+  padding: 10px 24px;
+  border: 1px solid var(--border, #2d3b33);
+  border-radius: 999px;
+  background: var(--surface, #1a2420);
+  color: var(--text, #f2ede4);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--share-transition),
+    border-color var(--share-transition),
+    transform 150ms ease;
+}
+
+.reflection-modal__btn:hover {
+  background: var(--surface-2, #243029);
+}
+
+.reflection-modal__btn:active {
+  transform: scale(0.97);
+}
+
+.reflection-modal__btn--ghost {
+  background: transparent;
+  border-color: var(--border-light, #3d4f44);
+  color: var(--text-muted, #7a756c);
+}
+
+.reflection-modal__btn--ghost:hover {
+  background: var(--surface-2, #243029);
+  color: var(--text-secondary, #b8b3aa);
+}
+
+.reflection-modal__btn--primary {
+  background: var(--accent, #d4b872);
+  color: var(--bg, #0a0f0d);
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.reflection-modal__btn--primary:hover {
+  filter: brightness(1.1);
+  background: var(--accent, #d4b872);
+}
+
+.reflection-modal__btn--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: none;
+}
+
+/* ==================== REFLECTION HISTORY CARDS ==================== */
+
+.reflection-history {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reflection-history__title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text, #f2ede4);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reflection-history__empty {
+  text-align: center;
+  color: var(--text-muted, #7a756c);
+  font-size: 0.85rem;
+  padding: 20px 0;
+}
+
+.reflection-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  background: var(--surface, #1a2420);
+  border: 1px solid var(--border, #2d3b33);
+  border-radius: 12px;
+  transition:
+    background var(--share-transition),
+    border-color var(--share-transition);
+}
+
+.reflection-card:hover {
+  background: var(--surface-2, #243029);
+  border-color: var(--border-light, #3d4f44);
+}
+
+.reflection-card__mood {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--bg-2, #111916);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.reflection-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.reflection-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.reflection-card__date {
+  font-size: 0.75rem;
+  color: var(--text-muted, #7a756c);
+}
+
+.reflection-card__mood-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent, #d4b872);
+}
+
+.reflection-card__note {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #b8b3aa);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+/* ==================== SHARE SECTION IN ANALYTICS ==================== */
+
+.share-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--surface, #1a2420);
+  border: 1px solid var(--border, #2d3b33);
+  border-radius: 14px;
+  margin-top: 16px;
+}
+
+.share-section__text {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #b8b3aa);
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 768px) {
+  .share-modal {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .share-modal__content {
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    padding: 24px 20px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .share-modal__actions {
+    flex-direction: column;
+  }
+
+  .share-modal__btn {
+    justify-content: center;
+  }
+
+  .reflection-modal {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .reflection-modal__content {
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    padding: 28px 20px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .mood-grid {
+    gap: 8px;
+  }
+
+  .mood-btn {
+    min-width: 76px;
+    padding: 10px 12px;
+    font-size: 0.72rem;
+  }
+
+  .mood-btn__icon {
+    font-size: 1.3rem;
+  }
+
+  .reflection-modal__textarea {
+    min-height: 64px;
+  }
+
+  .reflection-modal__actions {
+    flex-direction: column;
+  }
+
+  .reflection-modal__btn {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .share-section {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 400px) {
+  .share-modal__content {
+    padding: 20px 16px;
+  }
+
+  .reflection-modal__content {
+    padding: 24px 16px;
+  }
+
+  .mood-btn {
+    min-width: 68px;
+    padding: 8px 10px;
+    font-size: 0.7rem;
+  }
+
+  .mood-btn__icon {
+    font-size: 1.1rem;
+  }
+
+  .share-modal__btn {
+    padding: 10px 20px;
+    font-size: 0.85rem;
+  }
+}
+
+/* ==================== REDUCED MOTION ==================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .share-modal,
+  .share-modal__content,
+  .share-modal__backdrop,
+  .share-btn,
+  .share-modal__btn,
+  .reflection-modal,
+  .reflection-modal__content,
+  .reflection-modal__backdrop,
+  .mood-btn,
+  .mood-btn__icon,
+  .reflection-modal__btn,
+  .reflection-card {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}

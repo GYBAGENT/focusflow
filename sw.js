@@ -3,7 +3,7 @@
 // Cache-first for app shell, network-first for API, offline fallback
 // ============================================================
 
-const CACHE_VERSION = 'focusflow-v1';
+const CACHE_VERSION = 'focusflow-v2';
 const CACHE_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_DYNAMIC = `${CACHE_VERSION}-dynamic`;
 const CACHE_FONTS = `${CACHE_VERSION}-fonts`;
@@ -15,6 +15,16 @@ const APP_SHELL = [
   '/styles.css',
   '/app.js',
   '/manifest.json',
+  '/modules/onboarding.js',
+  '/modules/onboarding.css',
+  '/modules/streaks.js',
+  '/modules/achievements.js',
+  '/modules/gamification.css',
+  '/modules/sounds.js',
+  '/modules/sounds.css',
+  '/modules/sharing.js',
+  '/modules/sharing.css',
+  '/modules/reflection.js',
 ];
 
 // External resources to pre-cache
@@ -346,7 +356,9 @@ async function networkFirstWithCacheFallback(request, cacheName) {
 
 function isAppShellFile(pathname) {
   const shellPaths = ['/', '/index.html', '/styles.css', '/app.js', '/manifest.json'];
-  return shellPaths.includes(pathname);
+  if (shellPaths.includes(pathname)) return true;
+  if (pathname.startsWith('/modules/')) return true;
+  return false;
 }
 
 async function getOfflinePage() {
