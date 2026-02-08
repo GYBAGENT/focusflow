@@ -115,6 +115,10 @@ body {
   min-height: 100vh;
 }
 
+.app-shell.is-hidden {
+  display: none;
+}
+
 /* ==================== NAVIGATION SIDEBAR ==================== */
 .nav-sidebar {
   background: var(--bg-2);

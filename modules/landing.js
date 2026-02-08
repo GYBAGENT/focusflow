@@ -1,0 +1,523 @@
+/* =====================================================
+   FocusFlow — Landing Module
+   Full-page landing overlay with hero, features, steps,
+   auth forms, and footer. Shown to unauthenticated users.
+   BEM naming: .landing__*
+   ===================================================== */
+
+var LandingModule = {
+  _initialized: false,
+  _overlayEl: null,
+
+  /* ========== PUBLIC API ========== */
+
+  init: function() {
+    if (this._initialized) return;
+
+    var self = this;
+
+    this._buildOverlay();
+    document.body.appendChild(this._overlayEl);
+
+    // Listen for auth events
+    document.addEventListener("auth:login", function() {
+      self.hide();
+    });
+
+    document.addEventListener("auth:logout", function() {
+      self.show();
+    });
+
+    // Check initial auth state
+    if (typeof AuthModule !== "undefined" && AuthModule.isLoggedIn()) {
+      this._overlayEl.hidden = true;
+      var appShell = document.querySelector(".app-shell");
+      if (appShell) appShell.classList.remove("is-hidden");
+    } else if (sessionStorage.getItem("focusflow_guest_session")) {
+      this._overlayEl.hidden = true;
+      var appShell2 = document.querySelector(".app-shell");
+      if (appShell2) appShell2.classList.remove("is-hidden");
+    } else {
+      this.show();
+    }
+
+    this._initialized = true;
+    console.log("[Landing] Initialized");
+  },
+
+  show: function() {
+    var self = this;
+    if (!this._overlayEl) return;
+
+    this._overlayEl.hidden = false;
+    requestAnimationFrame(function() {
+      self._overlayEl.classList.add("is-visible");
+    });
+
+    var appShell = document.querySelector(".app-shell");
+    if (appShell) appShell.classList.add("is-hidden");
+
+    document.body.style.overflow = "hidden";
+  },
+
+  hide: function() {
+    var self = this;
+    if (!this._overlayEl) return;
+
+    this._overlayEl.classList.remove("is-visible");
+
+    setTimeout(function() {
+      if (self._overlayEl) self._overlayEl.hidden = true;
+    }, 300);
+
+    var appShell = document.querySelector(".app-shell");
+    if (appShell) appShell.classList.remove("is-hidden");
+
+    document.body.style.overflow = "";
+
+    document.dispatchEvent(new CustomEvent("landing:hidden"));
+  },
+
+  isVisible: function() {
+    if (!this._overlayEl) return false;
+    return !this._overlayEl.hidden && this._overlayEl.classList.contains("is-visible");
+  },
+
+  /* ========== PRIVATE: DOM BUILDERS ========== */
+
+  _buildOverlay: function() {
+    var self = this;
+
+    var overlay = document.createElement("div");
+    overlay.className = "landing__overlay";
+    overlay.hidden = true;
+
+    var scroll = document.createElement("div");
+    scroll.className = "landing__scroll-container";
+
+    // ============ HERO SECTION ============
+    var hero = document.createElement("section");
+    hero.className = "landing__hero";
+    hero.innerHTML =
+      '<div class="landing__hero-glow landing__hero-glow--1"></div>' +
+      '<div class="landing__hero-glow landing__hero-glow--2"></div>' +
+      '<div class="landing__hero-content">' +
+        '<div class="landing__logo-badge">FF</div>' +
+        '<h1 class="landing__title">FocusFlow</h1>' +
+        '<p class="landing__tagline">Quy trinh 3 buoc giup ban tap trung va lam viec hieu qua hon</p>' +
+        '<div class="landing__cta-group">' +
+          '<button class="btn btn--primary btn--large landing__cta-signup">Bat dau mien phi</button>' +
+          '<button class="btn btn--ghost btn--large landing__cta-login">Dang nhap</button>' +
+        '</div>' +
+      '</div>';
+    scroll.appendChild(hero);
+
+    hero.querySelector(".landing__cta-signup").addEventListener("click", function() {
+      self._scrollToAuth();
+      setTimeout(function() { self._switchAuthTab("signup"); }, 300);
+    });
+    hero.querySelector(".landing__cta-login").addEventListener("click", function() {
+      self._scrollToAuth();
+      setTimeout(function() { self._switchAuthTab("login"); }, 300);
+    });
+
+    // ============ FEATURES SECTION ============
+    var features = document.createElement("section");
+    features.className = "landing__features";
+    features.innerHTML =
+      '<h2 class="landing__section-title">Quy trinh 3 buoc de tap trung</h2>' +
+      '<div class="landing__features-grid">' +
+        '<div class="landing__feature-card">' +
+          '<span class="landing__feature-icon">\uD83C\uDFAF</span>' +
+          '<h3 class="landing__feature-title">Priority Flow</h3>' +
+          '<p class="landing__feature-desc">Phan loai cong viec theo Ma tran Eisenhower. Tap trung vao dieu quan trong nhat.</p>' +
+        '</div>' +
+        '<div class="landing__feature-card">' +
+          '<span class="landing__feature-icon">\u23F0</span>' +
+          '<h3 class="landing__feature-title">Time Flow</h3>' +
+          '<p class="landing__feature-desc">Sap xep thoi gian bang Time Blocking. Timeline truc quan voi mau sac.</p>' +
+        '</div>' +
+        '<div class="landing__feature-card">' +
+          '<span class="landing__feature-icon">\uD83D\uDD25</span>' +
+          '<h3 class="landing__feature-title">Deep Flow</h3>' +
+          '<p class="landing__feature-desc">Pomodoro Timer giup duy tri su tap trung. Chon 25, 50 hoac 90 phut.</p>' +
+        '</div>' +
+      '</div>';
+    scroll.appendChild(features);
+
+    // ============ HOW IT WORKS SECTION ============
+    var howItWorks = document.createElement("section");
+    howItWorks.className = "landing__steps";
+    howItWorks.innerHTML =
+      '<h2 class="landing__section-title">Cach hoat dong</h2>' +
+      '<div class="landing__steps-row">' +
+        '<div class="landing__step">' +
+          '<div class="landing__step-number">1</div>' +
+          '<h3 class="landing__step-title">Xac dinh uu tien</h3>' +
+          '<p class="landing__step-desc">Phan loai cong viec theo muc do quan trong va khan cap</p>' +
+        '</div>' +
+        '<div class="landing__step-arrow">\u2192</div>' +
+        '<div class="landing__step">' +
+          '<div class="landing__step-number">2</div>' +
+          '<h3 class="landing__step-title">Len lich</h3>' +
+          '<p class="landing__step-desc">Phan bo thoi gian cu the cho tung nhiem vu trong ngay</p>' +
+        '</div>' +
+        '<div class="landing__step-arrow">\u2192</div>' +
+        '<div class="landing__step">' +
+          '<div class="landing__step-number">3</div>' +
+          '<h3 class="landing__step-title">Tap trung</h3>' +
+          '<p class="landing__step-desc">Su dung Pomodoro Timer de lam viec hieu qua</p>' +
+        '</div>' +
+      '</div>';
+    scroll.appendChild(howItWorks);
+
+    // ============ AUTH SECTION ============
+    var authSection = document.createElement("section");
+    authSection.className = "landing__auth";
+    authSection.id = "landing-auth-section";
+
+    var authCard = document.createElement("div");
+    authCard.className = "landing__auth-card";
+
+    // Auth header
+    var authHeader = document.createElement("div");
+    authHeader.className = "landing__auth-header";
+    authHeader.innerHTML =
+      '<div class="landing__logo-badge landing__logo-badge--small">FF</div>' +
+      '<h2 class="landing__auth-title">Bat dau voi FocusFlow</h2>';
+    authCard.appendChild(authHeader);
+
+    // Auth tabs
+    var tabs = document.createElement("div");
+    tabs.className = "auth-tabs";
+    tabs.innerHTML =
+      '<button class="auth-tab is-active" data-landing-tab="login">Dang nhap</button>' +
+      '<button class="auth-tab" data-landing-tab="signup">Dang ky</button>';
+    authCard.appendChild(tabs);
+
+    // Error display
+    var errorDiv = document.createElement("div");
+    errorDiv.className = "auth-error";
+    errorDiv.id = "landing-auth-error";
+    errorDiv.hidden = true;
+    authCard.appendChild(errorDiv);
+
+    // Success display
+    var successDiv = document.createElement("div");
+    successDiv.className = "auth-success";
+    successDiv.id = "landing-auth-success";
+    successDiv.hidden = true;
+    authCard.appendChild(successDiv);
+
+    // Login form
+    var loginForm = document.createElement("form");
+    loginForm.className = "auth-form";
+    loginForm.id = "landing-login-form";
+    loginForm.innerHTML =
+      '<div class="auth-field">' +
+        '<label for="landing-login-email">Email</label>' +
+        '<input id="landing-login-email" type="email" placeholder="email@example.com" required autocomplete="email" />' +
+      '</div>' +
+      '<div class="auth-field">' +
+        '<label for="landing-login-password">Mat khau</label>' +
+        '<input id="landing-login-password" type="password" placeholder="Nhap mat khau" required autocomplete="current-password" minlength="6" />' +
+      '</div>' +
+      '<button type="submit" class="btn btn--primary auth-submit-btn">Dang nhap</button>' +
+      '<button type="button" class="auth-forgot-btn" id="landing-forgot-btn">Quen mat khau?</button>';
+    authCard.appendChild(loginForm);
+
+    // Signup form
+    var signupForm = document.createElement("form");
+    signupForm.className = "auth-form";
+    signupForm.id = "landing-signup-form";
+    signupForm.hidden = true;
+    signupForm.innerHTML =
+      '<div class="auth-field">' +
+        '<label for="landing-signup-name">Ten hien thi</label>' +
+        '<input id="landing-signup-name" type="text" placeholder="Ten cua ban" required autocomplete="name" />' +
+      '</div>' +
+      '<div class="auth-field">' +
+        '<label for="landing-signup-email">Email</label>' +
+        '<input id="landing-signup-email" type="email" placeholder="email@example.com" required autocomplete="email" />' +
+      '</div>' +
+      '<div class="auth-field">' +
+        '<label for="landing-signup-password">Mat khau</label>' +
+        '<input id="landing-signup-password" type="password" placeholder="It nhat 6 ky tu" required autocomplete="new-password" minlength="6" />' +
+      '</div>' +
+      '<button type="submit" class="btn btn--primary auth-submit-btn">Tao tai khoan</button>';
+    authCard.appendChild(signupForm);
+
+    // Reset password form
+    var resetForm = document.createElement("form");
+    resetForm.className = "auth-form";
+    resetForm.id = "landing-reset-form";
+    resetForm.hidden = true;
+    resetForm.innerHTML =
+      '<p class="auth-reset-desc">Nhap email de nhan lien ket dat lai mat khau.</p>' +
+      '<div class="auth-field">' +
+        '<label for="landing-reset-email">Email</label>' +
+        '<input id="landing-reset-email" type="email" placeholder="email@example.com" required autocomplete="email" />' +
+      '</div>' +
+      '<button type="submit" class="btn btn--primary auth-submit-btn">Gui lien ket</button>' +
+      '<button type="button" class="auth-back-btn" id="landing-back-to-login">Quay lai dang nhap</button>';
+    authCard.appendChild(resetForm);
+
+    // Divider
+    var divider = document.createElement("div");
+    divider.className = "auth-divider";
+    divider.id = "landing-auth-divider";
+    divider.innerHTML = "<span>hoac</span>";
+    authCard.appendChild(divider);
+
+    // Google OAuth button
+    var googleBtn = document.createElement("button");
+    googleBtn.type = "button";
+    googleBtn.className = "auth-google-btn";
+    googleBtn.id = "landing-google-btn";
+    googleBtn.innerHTML =
+      '<svg viewBox="0 0 24 24" width="20" height="20">' +
+        '<path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>' +
+        '<path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>' +
+        '<path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>' +
+        '<path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>' +
+      '</svg>' +
+      '<span>Tiep tuc voi Google</span>';
+    authCard.appendChild(googleBtn);
+
+    // Guest mode button
+    var guestBtn = document.createElement("button");
+    guestBtn.type = "button";
+    guestBtn.className = "landing__guest-btn";
+    guestBtn.textContent = "Dung thu khong can tai khoan";
+    authCard.appendChild(guestBtn);
+
+    authSection.appendChild(authCard);
+    scroll.appendChild(authSection);
+
+    // ============ FOOTER ============
+    var footer = document.createElement("footer");
+    footer.className = "landing__footer";
+    footer.innerHTML = '<p>FocusFlow \u2014 Duoc tao boi GYB Agent</p>';
+    scroll.appendChild(footer);
+
+    overlay.appendChild(scroll);
+    this._overlayEl = overlay;
+
+    // ============ EVENT LISTENERS ============
+
+    tabs.addEventListener("click", function(e) {
+      var tabBtn = e.target.closest(".auth-tab");
+      if (!tabBtn) return;
+      var tab = tabBtn.getAttribute("data-landing-tab");
+      self._switchAuthTab(tab);
+    });
+
+    loginForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      self._handleLogin(e);
+    });
+
+    signupForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      self._handleSignup(e);
+    });
+
+    resetForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      self._handleResetPassword(e);
+    });
+
+    authCard.querySelector("#landing-forgot-btn").addEventListener("click", function() {
+      self._switchAuthTab("reset");
+    });
+
+    authCard.querySelector("#landing-back-to-login").addEventListener("click", function() {
+      self._switchAuthTab("login");
+    });
+
+    googleBtn.addEventListener("click", function() {
+      self._handleGoogleOAuth();
+    });
+
+    guestBtn.addEventListener("click", function() {
+      sessionStorage.setItem("focusflow_guest_session", "true");
+      self.hide();
+    });
+  },
+
+  /* ========== PRIVATE: AUTH HANDLING ========== */
+
+  _switchAuthTab: function(tab) {
+    this._clearMessages();
+
+    var loginForm = document.getElementById("landing-login-form");
+    var signupForm = document.getElementById("landing-signup-form");
+    var resetForm = document.getElementById("landing-reset-form");
+    var divider = document.getElementById("landing-auth-divider");
+    var googleBtn = document.getElementById("landing-google-btn");
+    var tabBtns = this._overlayEl.querySelectorAll(".auth-tab");
+
+    if (!loginForm || !signupForm || !resetForm) return;
+
+    loginForm.hidden = true;
+    signupForm.hidden = true;
+    resetForm.hidden = true;
+
+    if (tab === "login") {
+      loginForm.hidden = false;
+      if (divider) divider.hidden = false;
+      if (googleBtn) googleBtn.hidden = false;
+      tabBtns.forEach(function(btn) {
+        btn.classList.toggle("is-active", btn.getAttribute("data-landing-tab") === "login");
+      });
+    } else if (tab === "signup") {
+      signupForm.hidden = false;
+      if (divider) divider.hidden = false;
+      if (googleBtn) googleBtn.hidden = false;
+      tabBtns.forEach(function(btn) {
+        btn.classList.toggle("is-active", btn.getAttribute("data-landing-tab") === "signup");
+      });
+    } else if (tab === "reset") {
+      resetForm.hidden = false;
+      if (divider) divider.hidden = true;
+      if (googleBtn) googleBtn.hidden = true;
+      tabBtns.forEach(function(btn) {
+        btn.classList.remove("is-active");
+      });
+    }
+  },
+
+  _handleLogin: function(e) {
+    var self = this;
+    this._clearMessages();
+
+    var email = document.getElementById("landing-login-email").value.trim();
+    var password = document.getElementById("landing-login-password").value;
+    if (!email || !password) return;
+
+    var form = document.getElementById("landing-login-form");
+    this._setLoading(form, true);
+
+    AuthModule.signInWithEmail(email, password).then(function() {
+      self._setLoading(form, false);
+    }).catch(function(err) {
+      self._setLoading(form, false);
+      self._showError(AuthModule.getErrorMessage(err));
+    });
+  },
+
+  _handleSignup: function(e) {
+    var self = this;
+    this._clearMessages();
+
+    var name = document.getElementById("landing-signup-name").value.trim();
+    var email = document.getElementById("landing-signup-email").value.trim();
+    var password = document.getElementById("landing-signup-password").value;
+    if (!name || !email || !password) return;
+
+    var form = document.getElementById("landing-signup-form");
+    this._setLoading(form, true);
+
+    AuthModule.signUpWithEmail(email, password, name).then(function(data) {
+      self._setLoading(form, false);
+      if (data.session) {
+        form.reset();
+      } else if (data.user && !data.session) {
+        self._showSuccess("Da tao tai khoan! Vui long kiem tra email de xac nhan.");
+        form.reset();
+      }
+    }).catch(function(err) {
+      self._setLoading(form, false);
+      self._showError(AuthModule.getErrorMessage(err));
+    });
+  },
+
+  _handleResetPassword: function(e) {
+    var self = this;
+    this._clearMessages();
+
+    var email = document.getElementById("landing-reset-email").value.trim();
+    if (!email) return;
+
+    var form = document.getElementById("landing-reset-form");
+    this._setLoading(form, true);
+
+    AuthModule.resetPassword(email).then(function() {
+      self._setLoading(form, false);
+      self._showSuccess("Da gui lien ket dat lai mat khau. Vui long kiem tra email.");
+    }).catch(function(err) {
+      self._setLoading(form, false);
+      self._showError(AuthModule.getErrorMessage(err));
+    });
+  },
+
+  _handleGoogleOAuth: function() {
+    var self = this;
+    this._clearMessages();
+
+    AuthModule.signInWithGoogle().catch(function(err) {
+      self._showError(AuthModule.getErrorMessage(err));
+    });
+  },
+
+  /* ========== PRIVATE: HELPERS ========== */
+
+  _showError: function(msg) {
+    var el = document.getElementById("landing-auth-error");
+    if (el) {
+      el.textContent = msg;
+      el.hidden = false;
+    }
+  },
+
+  _showSuccess: function(msg) {
+    var el = document.getElementById("landing-auth-success");
+    if (el) {
+      el.textContent = msg;
+      el.hidden = false;
+    }
+  },
+
+  _clearMessages: function() {
+    var err = document.getElementById("landing-auth-error");
+    var succ = document.getElementById("landing-auth-success");
+    if (err) { err.hidden = true; err.textContent = ""; }
+    if (succ) { succ.hidden = true; succ.textContent = ""; }
+  },
+
+  _setLoading: function(form, loading) {
+    var btn = form.querySelector(".auth-submit-btn");
+    if (!btn) return;
+    btn.disabled = loading;
+    if (loading) {
+      btn.dataset.origText = btn.textContent;
+      btn.textContent = "Dang xu ly...";
+    } else {
+      btn.textContent = btn.dataset.origText || btn.textContent;
+    }
+  },
+
+  _scrollToAuth: function() {
+    var authSection = document.getElementById("landing-auth-section");
+    if (authSection) {
+      authSection.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+};
+
+/* ========== SELF-INITIALIZATION ========== */
+
+(function() {
+  function tryInit() {
+    if (typeof AuthModule !== "undefined" && typeof SupabaseConfig !== "undefined") {
+      LandingModule.init();
+    } else {
+      setTimeout(tryInit, 100);
+    }
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function() { setTimeout(tryInit, 50); });
+  } else {
+    setTimeout(tryInit, 50);
+  }
+})();

@@ -3,7 +3,7 @@
 // Cache-first for app shell, network-first for API, offline fallback
 // ============================================================
 
-const CACHE_VERSION = 'focusflow-v3';
+const CACHE_VERSION = 'focusflow-v4';
 const CACHE_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_DYNAMIC = `${CACHE_VERSION}-dynamic`;
 const CACHE_FONTS = `${CACHE_VERSION}-fonts`;
@@ -29,6 +29,8 @@ const APP_SHELL = [
   '/modules/auth.js',
   '/modules/auth.css',
   '/modules/sync.js',
+  '/modules/landing.js',
+  '/modules/landing.css',
 ];
 
 // External resources to pre-cache

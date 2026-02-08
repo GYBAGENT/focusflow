@@ -112,6 +112,28 @@ var AuthModule = {
     return this._user !== null;
   },
 
+  /* ========== PUBLIC: AUTH ACTIONS (for LandingModule) ========== */
+
+  signInWithEmail: function(email, password) {
+    return this._signInWithEmail(email, password);
+  },
+
+  signUpWithEmail: function(email, password, displayName) {
+    return this._signUpWithEmail(email, password, displayName);
+  },
+
+  signInWithGoogle: function() {
+    return this._signInWithGoogle();
+  },
+
+  resetPassword: function(email) {
+    return this._resetPassword(email);
+  },
+
+  getErrorMessage: function(error) {
+    return this._getErrorMessage(error);
+  },
+
   /* ========== PRIVATE: AUTH ACTIONS ========== */
 
   _signInWithEmail: function(email, password) {
@@ -657,7 +679,11 @@ var AuthModule = {
       settingsSections.insertBefore(group, settingsSections.firstChild);
 
       document.getElementById("auth-login-settings-btn").addEventListener("click", function() {
-        self.showLoginModal();
+        if (typeof LandingModule !== "undefined") {
+          LandingModule.show();
+        } else {
+          self.showLoginModal();
+        }
       });
     }
   },

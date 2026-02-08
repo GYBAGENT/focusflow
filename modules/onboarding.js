@@ -586,6 +586,17 @@
       return;
     }
 
+    // Guard: wait for landing page to hide before showing onboarding
+    if (typeof LandingModule !== "undefined" && LandingModule.isVisible()) {
+      document.addEventListener("landing:hidden", function() {
+        setTimeout(function() {
+          var onboarding = new Onboarding();
+          onboarding.init();
+        }, 300);
+      }, { once: true });
+      return;
+    }
+
     // Delay 600ms to ensure app.js has loaded and initialized
     setTimeout(function () {
       var onboarding = new Onboarding();
