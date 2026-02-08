@@ -84,6 +84,18 @@ const els = {
   matrixPriorityCount: document.querySelector("#matrix-priority-count"),
   matrixNormalCount: document.querySelector("#matrix-normal-count"),
   clearCompletedBtn: document.querySelector("#clear-completed-btn"),
+  taskSearchInput: document.querySelector("#task-search-input"),
+  taskSearchClear: document.querySelector("#task-search-clear"),
+  taskFilterCount: document.querySelector("#task-filter-count"),
+  taskRecurring: document.querySelector("#task-recurring"),
+  blockEditModal: document.querySelector("#block-edit-modal"),
+  blockEditTitleInput: document.querySelector("#block-edit-title-input"),
+  blockEditStart: document.querySelector("#block-edit-start"),
+  blockEditDuration: document.querySelector("#block-edit-duration"),
+  blockEditTask: document.querySelector("#block-edit-task"),
+  blockEditColors: document.querySelector("#block-edit-colors"),
+  blockEditSave: document.querySelector("#block-edit-save"),
+  blockEditCancel: document.querySelector("#block-edit-cancel"),
 
   // Blocks
   blockStart: document.querySelector("#block-start"),
@@ -172,6 +184,10 @@ let activeTaskId = null;
 let currentView = "dashboard";
 let selectedBlockColor = "green"; // Default color
 let lastAction = null;
+let currentTaskFilter = "all";
+let currentTaskSearch = "";
+let searchDebounceTimer = null;
+let editingBlockId = null;
 
 // ================== CUSTOM MODAL SYSTEM ==================
 function showCustomPrompt(title, defaultValue = "") {
@@ -865,6 +881,9 @@ function normalizeTask(task) {
     done: Boolean(task.done),
     notes: task.notes ?? "",
     subtasks: Array.isArray(task.subtasks) ? task.subtasks : [],
+    recurring: task.recurring || null,
+    isRecurringInstance: Boolean(task.isRecurringInstance),
+    recurringParentId: task.recurringParentId || null,
   };
 }
 
@@ -1150,7 +1169,7 @@ function recordSession(type, durationMinutes) {
     blockId: blockIdForSession,
     contextLabel: contextLabel,
   });
-  sessions = sessions.slice(0, 30);
+  sessions = sessions.slice(0, 200);
   saveSessions();
   renderSessions();
   refreshInsights();
@@ -1175,8 +1194,86 @@ function getQuadrant(task) {
   return "eliminate";
 }
 
+function checkRecurringTasks() {
+  var todayKey = formatDateKey(new Date());
+  var today = new Date();
+  var dayOfWeek = today.getDay();
+  var generated = 0;
+
+  tasks.forEach(function(task) {
+    if (!task.recurring) return;
+    if (!task.done) return;
+
+    var lastGen = task.recurring.lastGenerated
+      ? formatDateKey(new Date(task.recurring.lastGenerated))
+      : null;
+
+    if (lastGen === todayKey) return;
+
+    if (task.recurring.frequency === "weekday" && (dayOfWeek === 0 || dayOfWeek === 6)) {
+      return;
+    }
+
+    if (task.recurring.frequency === "weekly") {
+      if (task.recurring.lastGenerated) {
+        var daysSince = Math.floor((Date.now() - task.recurring.lastGenerated) / (1000 * 60 * 60 * 24));
+        if (daysSince < 7) return;
+      }
+    }
+
+    var newTask = {
+      id: crypto.randomUUID(),
+      text: task.text,
+      done: false,
+      important: task.important,
+      urgent: task.urgent,
+      estimateMinutes: task.estimateMinutes,
+      createdAt: Date.now(),
+      notes: "",
+      subtasks: [],
+      recurring: { frequency: task.recurring.frequency, lastGenerated: Date.now() },
+      isRecurringInstance: true,
+      recurringParentId: task.recurringParentId || task.id,
+    };
+
+    tasks.unshift(normalizeTask(newTask));
+    task.recurring.lastGenerated = Date.now();
+    generated++;
+  });
+
+  if (generated > 0) {
+    saveTasks();
+    renderMatrix();
+    showToast("Đã tạo " + generated + " việc lặp lại cho hôm nay.", "info");
+  }
+}
+
+function getFilteredTasks() {
+  let filtered = tasks;
+  if (currentTaskFilter === "pending") {
+    filtered = filtered.filter(function(t) { return !t.done; });
+  } else if (currentTaskFilter === "done") {
+    filtered = filtered.filter(function(t) { return t.done; });
+  }
+  if (currentTaskSearch.trim()) {
+    var query = currentTaskSearch.toLowerCase().trim();
+    filtered = filtered.filter(function(t) { return t.text.toLowerCase().includes(query); });
+  }
+  return filtered;
+}
+
+function updateFilterCount(visibleCount) {
+  if (!els.taskFilterCount) return;
+  if (currentTaskFilter === "all" && !currentTaskSearch.trim()) {
+    els.taskFilterCount.textContent = "";
+  } else {
+    els.taskFilterCount.textContent = "Hiển thị " + visibleCount + "/" + tasks.length + " việc";
+  }
+}
+
 function renderMatrix() {
   // Phân loại theo ma trận Eisenhower
+  const filteredTasks = getFilteredTasks();
   const buckets = {
     do: [],       // Quan trọng + Khẩn cấp
     schedule: [], // Quan trọng + Không khẩn cấp
@@ -1184,7 +1281,7 @@ function renderMatrix() {
     eliminate: [] // Không quan trọng + Không khẩn cấp
   };
 
-  tasks.forEach((task) => {
+  filteredTasks.forEach((task) => {
     buckets[getQuadrant(task)].push(task);
   });
 
@@ -1207,6 +1304,7 @@ function renderMatrix() {
   updateTaskMeta();
   updateDashboard();
   updateNavBadges();
+  updateFilterCount(filteredTasks.length);
 }
 
 // ================== DRAG & DROP ==================
@@ -1487,6 +1585,16 @@ function createTaskItem(task) {
     meta.appendChild(subtaskBadge);
   }
 
+  // Recurring badge
+  if (task.recurring) {
+    var recurBadge = document.createElement("span");
+    recurBadge.className = "task-item__badge task-item__badge--recurring";
+    var freqLabels = { daily: "Hàng ngày", weekday: "T2-T6", weekly: "Hàng tuần" };
+    recurBadge.textContent = "🔄 " + (freqLabels[task.recurring.frequency] || "Lặp lại");
+    recurBadge.title = "Việc lặp lại: " + (freqLabels[task.recurring.frequency] || "");
+    meta.appendChild(recurBadge);
+  }
+
   content.appendChild(title);
   content.appendChild(meta);
 
@@ -1495,6 +1603,18 @@ function createTaskItem(task) {
   actions.className = "task-item__actions";
 
   if (!task.done) {
+    // Focus button
+    var focusBtn = document.createElement("button");
+    focusBtn.type = "button";
+    focusBtn.className = "task-item__btn task-item__btn--focus";
+    focusBtn.innerHTML = "▶";
+    focusBtn.title = "Focus ngay";
+    focusBtn.addEventListener("click", function(e) {
+      e.stopPropagation();
+      startFocusForTask(task);
+    });
+    actions.appendChild(focusBtn);
+
     // Flow 1: Chỉ hiện nút Schedule (chuyển sang Flow 2)
     if (!linkedBlock) {
       const scheduleBtn = document.createElement("button");
@@ -1580,6 +1700,10 @@ function addTask() {
     return;
   }
 
+  // Recurring task
+  var recurringValue = els.taskRecurring ? els.taskRecurring.value : "";
+  var recurringData = recurringValue ? { frequency: recurringValue, lastGenerated: Date.now() } : null;
+
   // Flow 1: Tạo task với priority và estimate mặc định
   tasks.unshift({
     id: crypto.randomUUID(),
@@ -1587,13 +1711,17 @@ function addTask() {
     done: false,
     important: els.taskImportant.checked,
     urgent: els.taskUrgent.checked,
-    estimateMinutes: settings.focusMinutes, // Mặc định = thời gian focus
+    estimateMinutes: settings.focusMinutes,
     createdAt: Date.now(),
+    recurring: recurringData,
+    isRecurringInstance: false,
+    recurringParentId: null,
   });
 
   els.taskInput.value = "";
   els.taskImportant.checked = false;
   els.taskUrgent.checked = false;
+  if (els.taskRecurring) els.taskRecurring.value = "";
   saveTasks();
   renderMatrix();
   showToast(`Đã thêm: "${value.length > 30 ? value.substring(0, 30) + "..." : value}"`, "success");
@@ -1615,6 +1743,12 @@ function toggleTask(taskId) {
   // === Module Hook: Check task achievements ===
   if (!wasDone && typeof AchievementModule !== "undefined" && AchievementModule.checkTaskCompletion) {
     try { AchievementModule.checkTaskCompletion(); } catch (e) { console.warn("[Modules] Achievement task error:", e); }
+  }
+
+  // Check recurring tasks when a task is completed
+  var updatedTask = tasks.find(function(t) { return t.id === taskId; });
+  if (!wasDone && updatedTask && updatedTask.recurring) {
+    setTimeout(function() { checkRecurringTasks(); }, 100);
   }
 }
 
@@ -2311,27 +2445,109 @@ async function retryBlock(blockId) {
   }
 }
 
-async function editBlock(blockId) {
-  const block = blocks.find((b) => b.id === blockId);
+function editBlock(blockId) {
+  var block = blocks.find(function(b) { return b.id === blockId; });
   if (!block) return;
 
-  const newTitle = await showCustomPrompt("Sửa tiêu đề block:", block.title);
-  if (newTitle === null) return;
-  if (newTitle.trim() === "") return;
+  editingBlockId = blockId;
 
-  const newDuration = await showCustomPrompt("Thời lượng (phút):", String(block.duration));
-  if (newDuration === null) return;
-  const parsedDuration = parseInt(newDuration, 10);
-  if (isNaN(parsedDuration) || parsedDuration < 10 || parsedDuration > 240) {
-    showToast("Thời lượng phải từ 10 đến 240 phút", "warning");
+  // Populate modal fields
+  if (els.blockEditTitleInput) els.blockEditTitleInput.value = block.title || "";
+  if (els.blockEditStart) els.blockEditStart.value = block.startTime || "";
+  if (els.blockEditDuration) els.blockEditDuration.value = block.duration || 50;
+
+  // Populate task link dropdown
+  if (els.blockEditTask) {
+    els.blockEditTask.innerHTML = '<option value="">-- Không liên kết --</option>';
+    tasks.filter(function(t) { return !t.done; }).forEach(function(t) {
+      var opt = document.createElement("option");
+      opt.value = t.id;
+      opt.textContent = t.text;
+      if (block.linkedTaskId === t.id) opt.selected = true;
+      els.blockEditTask.appendChild(opt);
+    });
+  }
+
+  // Highlight current color
+  if (els.blockEditColors) {
+    var colorBtns = els.blockEditColors.querySelectorAll(".block-edit-color-btn");
+    colorBtns.forEach(function(btn) {
+      btn.classList.toggle("is-selected", btn.dataset.color === (block.color || "default"));
+    });
+  }
+
+  // Show modal
+  if (els.blockEditModal) {
+    els.blockEditModal.hidden = false;
+    requestAnimationFrame(function() {
+      els.blockEditModal.classList.add("is-visible");
+    });
+  }
+}
+
+function saveBlockEdit() {
+  if (!editingBlockId) return;
+
+  var title = els.blockEditTitleInput ? els.blockEditTitleInput.value.trim() : "";
+  var startTime = els.blockEditStart ? els.blockEditStart.value : "";
+  var duration = els.blockEditDuration ? parseInt(els.blockEditDuration.value, 10) : 50;
+  var linkedTaskId = els.blockEditTask ? els.blockEditTask.value : "";
+
+  if (!title) {
+    showToast("Vui lòng nhập tiêu đề", "warning");
+    return;
+  }
+  if (isNaN(duration) || duration < 10 || duration > 240) {
+    showToast("Thời lượng phải từ 10-240 phút", "warning");
     return;
   }
 
-  blocks = blocks.map((b) =>
-    b.id === blockId ? { ...b, title: newTitle.trim(), duration: parsedDuration } : b
-  );
+  // Get selected color
+  var selectedColor = "default";
+  if (els.blockEditColors) {
+    var sel = els.blockEditColors.querySelector(".block-edit-color-btn.is-selected");
+    if (sel) selectedColor = sel.dataset.color || "default";
+  }
+
+  // Check conflict (exclude current block)
+  if (startTime) {
+    var conflict = checkBlockConflict(startTime, duration, editingBlockId);
+    if (conflict) {
+      showToast("Trùng lịch với: " + conflict.title, "warning");
+      return;
+    }
+  }
+
+  blocks = blocks.map(function(b) {
+    if (b.id === editingBlockId) {
+      return Object.assign({}, b, {
+        title: title,
+        startTime: startTime || b.startTime,
+        duration: duration,
+        linkedTaskId: linkedTaskId || null,
+        color: selectedColor
+      });
+    }
+    return b;
+  });
+
   saveBlocks();
   renderBlocks();
+  closeBlockEditModal();
+  showToast("Đã cập nhật block", "success");
+
+  // Trigger sync
+  if (typeof SyncModule !== "undefined" && SyncModule.queueSync) {
+    SyncModule.queueSync();
+  }
+}
+
+function closeBlockEditModal() {
+  editingBlockId = null;
+  if (els.blockEditModal) {
+    els.blockEditModal.classList.remove("is-visible");
+    setTimeout(function() { els.blockEditModal.hidden = true; }, 250);
+  }
 }
 
 async function removeBlock(blockId) {
@@ -2394,19 +2610,20 @@ function startBlock(block) {
 }
 
 function startFocusForTask(task) {
+  if (!task || task.done) return;
   pauseTimer();
   mode = "focus";
-  currentFocusMinutes = task.estimateMinutes;
-  remainingSeconds = task.estimateMinutes * 60;
+  currentFocusMinutes = task.estimateMinutes || settings.focusMinutes;
+  remainingSeconds = currentFocusMinutes * 60;
 
-  // Đánh dấu task đang làm
   activeTaskId = task.id;
   activeBlockId = null;
 
   updateDisplay();
   saveState();
   startTimer();
-  scrollToTimer();
+  navigateTo("timer");
+  showToast("Focus: " + task.text, "success", 2000);
 }
 
 function scrollToTimer() {
@@ -2443,6 +2660,9 @@ function refreshInsights() {
   renderWeeklyChart();
   updateNavBadges();
   updateDashboard();
+  if (typeof AnalyticsModule !== "undefined" && AnalyticsModule.render) {
+    try { AnalyticsModule.render(); } catch (e) { console.warn("[Analytics] render error:", e); }
+  }
 }
 
 function getTodayFocusSessions() {
@@ -3283,6 +3503,10 @@ function bootApp() {
   updateBlockTaskSelect();
   updateColorPickerUI();
 
+  // Check recurring tasks on boot + every 30 minutes
+  checkRecurringTasks();
+  setInterval(checkRecurringTasks, 30 * 60 * 1000);
+
   // Auto-refresh trạng thái mỗi phút
   startAutoRefresh();
 
@@ -3295,6 +3519,7 @@ function bootApp() {
       try {
         StreakModule.renderStreakWidget();
         SharingModule.init();
+        if (typeof AnalyticsModule !== "undefined") { AnalyticsModule.init(); }
       } catch (e) { console.warn("[Modules] Init error:", e); }
     } else if (attempts < 20) {
       setTimeout(function() { pollModules(attempts + 1); }, 100);
@@ -3318,8 +3543,11 @@ function bootApp() {
     if (typeof StreakModule !== "undefined") {
       try { StreakModule.renderStreakWidget(); } catch (e) {}
     }
+    if (typeof AnalyticsModule !== "undefined" && AnalyticsModule.render) {
+      try { AnalyticsModule.render(); } catch (e) {}
+    }
     if (typeof showToast === "function") {
-      showToast("Du lieu da dong bo tu may chu.", "success", 2500);
+      showToast("Dữ liệu đã đồng bộ từ máy chủ.", "success", 2500);
     }
   });
 
@@ -3470,6 +3698,65 @@ if (importBtn && importFileInput) {
   });
 }
 
+// === Task Search & Filter Listeners ===
+if (els.taskSearchInput) {
+  els.taskSearchInput.addEventListener("input", function() {
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(function() {
+      currentTaskSearch = els.taskSearchInput.value;
+      renderMatrix();
+    }, 300);
+  });
+}
+
+if (els.taskSearchClear) {
+  els.taskSearchClear.addEventListener("click", function() {
+    currentTaskSearch = "";
+    if (els.taskSearchInput) els.taskSearchInput.value = "";
+    renderMatrix();
+  });
+}
+
+// Filter buttons
+document.querySelectorAll(".task-filter").forEach(function(btn) {
+  btn.addEventListener("click", function() {
+    currentTaskFilter = btn.dataset.filter || "all";
+    document.querySelectorAll(".task-filter").forEach(function(b) {
+      b.classList.toggle("is-active", b.dataset.filter === currentTaskFilter);
+    });
+    renderMatrix();
+  });
+});
+
+// === Block Edit Modal Listeners ===
+if (els.blockEditSave) {
+  els.blockEditSave.addEventListener("click", saveBlockEdit);
+}
+
+if (els.blockEditCancel) {
+  els.blockEditCancel.addEventListener("click", closeBlockEditModal);
+}
+
+if (els.blockEditModal) {
+  els.blockEditModal.addEventListener("click", function(e) {
+    if (e.target === els.blockEditModal || e.target.classList.contains("modal__backdrop")) {
+      closeBlockEditModal();
+    }
+  });
+}
+
+// Block edit color picker
+if (els.blockEditColors) {
+  els.blockEditColors.addEventListener("click", function(e) {
+    var btn = e.target.closest(".block-edit-color-btn");
+    if (!btn) return;
+    els.blockEditColors.querySelectorAll(".block-edit-color-btn").forEach(function(b) {
+      b.classList.remove("is-selected");
+    });
+    btn.classList.add("is-selected");
+  });
+}
+
 els.soundToggle.addEventListener("change", () => {
   settings.soundOn = els.soundToggle.checked;
   saveSettings();
@@ -3568,6 +3855,10 @@ document.addEventListener("keydown", (e) => {
 
   // Escape: Đóng modal
   if (e.code === "Escape") {
+    if (els.blockEditModal && !els.blockEditModal.hidden) {
+      closeBlockEditModal();
+      return;
+    }
     if (!els.completionModal.hidden) {
       hideCompletionModal();
     }

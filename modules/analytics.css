@@ -1,0 +1,298 @@
+/* =====================================================
+   FocusFlow — Analytics Module Styles (Round 6)
+   Advanced analytics: insight cards, heatmap, hours chart.
+   ===================================================== */
+
+/* ==================== EMPTY STATE ==================== */
+
+.analytics-empty {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.analytics-empty__icon {
+  font-size: 40px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.analytics-empty__text {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ==================== INSIGHT CARDS ==================== */
+
+.analytics-insights {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.analytics-insight-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 16px;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.analytics-insight-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.analytics-insight-card__icon {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+.analytics-insight-card__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.analytics-insight-card__value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.analytics-insight-card__detail {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* ==================== HEATMAP ==================== */
+
+.analytics-heatmap {
+  margin-bottom: 24px;
+}
+
+.analytics-heatmap__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.analytics-heatmap__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.analytics-heatmap__day-label {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  padding-bottom: 4px;
+}
+
+.analytics-heatmap__cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  position: relative;
+  cursor: default;
+  min-width: 0;
+  transition: transform 150ms ease;
+}
+
+.analytics-heatmap__cell:hover {
+  transform: scale(1.15);
+  z-index: 1;
+}
+
+.analytics-heatmap__cell--0 { background: var(--surface-2); }
+.analytics-heatmap__cell--1 { background: rgba(90, 158, 118, 0.2); }
+.analytics-heatmap__cell--2 { background: rgba(90, 158, 118, 0.4); }
+.analytics-heatmap__cell--3 { background: rgba(90, 158, 118, 0.65); }
+.analytics-heatmap__cell--4 { background: var(--accent-2); }
+
+.analytics-heatmap__cell--today {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.analytics-heatmap__cell--future {
+  opacity: 0.3;
+}
+
+.analytics-heatmap__cell--mini {
+  width: 14px;
+  height: 14px;
+  aspect-ratio: auto;
+  display: inline-block;
+  border-radius: 3px;
+}
+
+.analytics-heatmap__cell--mini:hover {
+  transform: none;
+}
+
+.analytics-heatmap__date {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text);
+  pointer-events: none;
+}
+
+.analytics-heatmap__legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.analytics-heatmap__legend-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 0 4px;
+}
+
+/* ==================== PRODUCTIVE HOURS ==================== */
+
+.analytics-hours {
+  margin-bottom: 24px;
+}
+
+.analytics-hours__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.analytics-hours__chart {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.analytics-hours__bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 20px;
+}
+
+.analytics-hours__label {
+  font-size: 11px;
+  color: var(--text-muted);
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.analytics-hours__bar {
+  flex: 1;
+  height: 14px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.analytics-hours__fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-2), rgba(90, 158, 118, 0.7));
+  border-radius: 4px;
+  transition: width 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0;
+}
+
+.analytics-hours__value {
+  font-size: 11px;
+  color: var(--text-secondary);
+  width: 36px;
+  text-align: left;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==================== LIGHT THEME ==================== */
+
+[data-theme="light"] .analytics-heatmap__cell--1 { background: rgba(58, 125, 84, 0.15); }
+[data-theme="light"] .analytics-heatmap__cell--2 { background: rgba(58, 125, 84, 0.3); }
+[data-theme="light"] .analytics-heatmap__cell--3 { background: rgba(58, 125, 84, 0.5); }
+[data-theme="light"] .analytics-heatmap__cell--4 { background: var(--accent-2); }
+
+[data-theme="light"] .analytics-insight-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .analytics-hours__fill {
+  background: linear-gradient(90deg, var(--accent-2), rgba(58, 125, 84, 0.6));
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 768px) {
+  .analytics-insights {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-heatmap__grid {
+    gap: 3px;
+  }
+
+  .analytics-heatmap__cell--mini {
+    width: 12px;
+    height: 12px;
+  }
+
+  .analytics-hours__bar-row {
+    height: 18px;
+  }
+
+  .analytics-hours__bar {
+    height: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .analytics-insight-card {
+    padding: 14px 12px;
+  }
+
+  .analytics-insight-card__value {
+    font-size: 18px;
+  }
+}
+
+/* ==================== REDUCED MOTION ==================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .analytics-insight-card {
+    transition: none;
+  }
+
+  .analytics-heatmap__cell {
+    transition: none;
+  }
+
+  .analytics-hours__fill {
+    transition: none;
+  }
+}

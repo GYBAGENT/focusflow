@@ -49,6 +49,7 @@
     <link rel="stylesheet" href="modules/sharing.css" />
     <link rel="stylesheet" href="modules/auth.css" />
     <link rel="stylesheet" href="modules/landing.css" />
+    <link rel="stylesheet" href="modules/analytics.css" />
     <script>
       // Theme initialization — runs before first paint to prevent flash of wrong theme
       (function() {
@@ -306,9 +307,32 @@
                   <span class="toggle-chip__label">Khẩn cấp</span>
                 </label>
               </div>
+              <div class="task-add-recurring">
+                <select id="task-recurring" class="task-recurring-select" aria-label="Lặp lại">
+                  <option value="">Không lặp lại</option>
+                  <option value="daily">Hàng ngày</option>
+                  <option value="weekday">Ngày thường (T2-T6)</option>
+                  <option value="weekly">Hàng tuần</option>
+                </select>
+              </div>
               <span class="task-add-hint">Chọn để phân loại tự động</span>
             </div>
             <input id="task-estimate" type="hidden" value="30" />
+          </div>
+
+          <!-- Task Search & Filter Toolbar -->
+          <div class="task-toolbar">
+            <div class="task-search">
+              <span class="task-search__icon">🔍</span>
+              <input type="text" id="task-search-input" class="task-search__input" placeholder="Tìm kiếm việc..." aria-label="Tìm kiếm việc cần làm" />
+              <button id="task-search-clear" class="task-search__clear" hidden aria-label="Xóa tìm kiếm">&times;</button>
+            </div>
+            <div class="task-filters">
+              <button class="task-filter is-active" data-filter="all">Tất cả</button>
+              <button class="task-filter" data-filter="pending">Đang làm</button>
+              <button class="task-filter" data-filter="done">Hoàn thành</button>
+            </div>
+            <span id="task-filter-count" class="task-filter-count"></span>
           </div>
 
           <!-- Ma trận Eisenhower 2x2 với labels -->
@@ -687,6 +711,9 @@
             <div id="week-chart" class="week-chart"></div>
             <p id="week-total" class="analytics-section__summary"></p>
           </div>
+
+            <!-- Advanced Analytics (Module-rendered) -->
+            <div id="analytics-advanced" class="analytics-advanced"></div>
 
           <!-- Session History -->
           <div class="analytics-section">
@@ -1075,6 +1102,44 @@
       </div>
     </div>
 
+    <!-- Block Edit Modal -->
+      <div id="block-edit-modal" class="custom-modal" role="dialog" aria-modal="true" aria-labelledby="block-edit-modal-title" hidden>
+        <div class="custom-modal__backdrop"></div>
+        <div class="custom-modal__content custom-modal__content--wide">
+          <h3 id="block-edit-modal-title" class="custom-modal__title">Sửa block</h3>
+          <div class="block-edit-form">
+            <div class="block-edit-field">
+              <label for="block-edit-title-input" class="block-edit-label">Tiêu đề</label>
+              <input id="block-edit-title-input" type="text" class="custom-modal__input" autocomplete="off" />
+            </div>
+            <div class="block-edit-row">
+              <div class="block-edit-field">
+                <label for="block-edit-start" class="block-edit-label">Giờ bắt đầu</label>
+                <input id="block-edit-start" type="time" class="custom-modal__input" />
+              </div>
+              <div class="block-edit-field">
+                <label for="block-edit-duration" class="block-edit-label">Thời lượng (phút)</label>
+                <input id="block-edit-duration" type="number" min="10" max="240" class="custom-modal__input" />
+              </div>
+            </div>
+            <div class="block-edit-field">
+              <label for="block-edit-task" class="block-edit-label">Liên kết task</label>
+              <select id="block-edit-task" class="custom-modal__input">
+                <option value="">-- Không liên kết --</option>
+              </select>
+            </div>
+            <div class="block-edit-field">
+              <label class="block-edit-label">Màu sắc</label>
+              <div id="block-edit-colors" class="block-edit-colors"></div>
+            </div>
+          </div>
+          <div class="custom-modal__actions">
+            <button id="block-edit-cancel" class="btn btn--ghost">Hủy</button>
+            <button id="block-edit-save" class="btn btn--primary">Lưu thay đổi</button>
+          </div>
+        </div>
+      </div>
+
     <!-- PWA Install Banner -->
     <div id="pwa-install-banner" class="pwa-install-banner" hidden>
       <div class="pwa-install-banner__content">
@@ -1115,6 +1180,7 @@
     <script src="modules/auth.js" defer></script>
     <script src="modules/sync.js" defer></script>
     <script src="modules/landing.js" defer></script>
+    <script src="modules/analytics.js" defer></script>
 
     <!-- Premium Modules -->
     <script src="modules/onboarding.js" defer></script>

@@ -6103,3 +6103,270 @@ html { scroll-behavior: smooth; }
   html { scroll-behavior: auto; }
   .confetti-particle, .celebration-text, .celebration-container { display: none !important; }
 }
+
+
+/* =====================================================
+   Round 6 — Task Search & Filter
+   ===================================================== */
+
+.task-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  flex-wrap: wrap;
+}
+
+.task-search {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 14px;
+  flex: 1;
+  min-width: 180px;
+  transition: border-color 200ms ease;
+}
+
+.task-search:focus-within {
+  border-color: var(--accent);
+}
+
+.task-search__icon {
+  margin-right: 8px;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.task-search__input {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 14px;
+  width: 100%;
+  outline: none;
+}
+
+.task-search__input::placeholder {
+  color: var(--text-muted);
+}
+
+.task-search__clear {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color 150ms ease;
+}
+
+.task-search__clear:hover {
+  color: var(--text);
+}
+
+.task-filters {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.task-filter {
+  padding: 7px 16px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 200ms ease;
+  white-space: nowrap;
+}
+
+.task-filter:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.task-filter.is-active {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+
+.task-filter-count {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* =====================================================
+   Round 6 — Recurring Tasks
+   ===================================================== */
+
+.task-add-recurring {
+  flex-shrink: 0;
+}
+
+.task-recurring-select {
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 200ms ease;
+}
+
+.task-recurring-select:focus {
+  border-color: var(--accent);
+}
+
+.task-item__badge--recurring {
+  color: var(--accent-2);
+  background: rgba(90, 158, 118, 0.12);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+/* =====================================================
+   Round 6 — Quick Focus Button on Tasks
+   ===================================================== */
+
+.task-item__btn--focus {
+  color: var(--accent-2);
+  font-size: 12px;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 150ms ease;
+  flex-shrink: 0;
+}
+
+.task-item__btn--focus:hover {
+  background: rgba(90, 158, 118, 0.15);
+  border-color: var(--accent-2);
+}
+
+/* =====================================================
+   Round 6 — Block Edit Modal
+   ===================================================== */
+
+.custom-modal__content--wide {
+  max-width: 480px;
+}
+
+.block-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.block-edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.block-edit-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.block-edit-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.block-edit-colors {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.block-edit-color-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color 200ms ease, transform 150ms ease;
+}
+
+.block-edit-color-btn:hover {
+  transform: scale(1.1);
+}
+
+.block-edit-color-btn.is-active {
+  border-color: var(--text);
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text-muted);
+}
+
+.block-edit-color-btn--green { background: #5a9e76; }
+.block-edit-color-btn--blue { background: #5a8bb0; }
+.block-edit-color-btn--purple { background: #8a6cb0; }
+.block-edit-color-btn--orange { background: #b8885a; }
+.block-edit-color-btn--red { background: #b05a5a; }
+.block-edit-color-btn--yellow { background: #b0a55a; }
+
+/* =====================================================
+   Round 6 — Analytics Advanced
+   ===================================================== */
+
+.analytics-advanced {
+  margin-top: 20px;
+}
+
+/* =====================================================
+   Round 6 — Responsive
+   ===================================================== */
+
+@media (max-width: 768px) {
+  .task-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .task-filters {
+    justify-content: center;
+  }
+
+  .task-filter-count {
+    text-align: center;
+  }
+
+  .block-edit-row {
+    grid-template-columns: 1fr;
+  }
+
+  .task-recurring-select {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .task-filter {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}

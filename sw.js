@@ -3,7 +3,7 @@
 // Cache-first for app shell, network-first for API, offline fallback
 // ============================================================
 
-const CACHE_VERSION = 'focusflow-v4';
+const CACHE_VERSION = 'focusflow-v5';
 const CACHE_STATIC = `${CACHE_VERSION}-static`;
 const CACHE_DYNAMIC = `${CACHE_VERSION}-dynamic`;
 const CACHE_FONTS = `${CACHE_VERSION}-fonts`;
@@ -31,6 +31,8 @@ const APP_SHELL = [
   '/modules/sync.js',
   '/modules/landing.js',
   '/modules/landing.css',
+  '/modules/analytics.js',
+  '/modules/analytics.css',
 ];
 
 // External resources to pre-cache
@@ -114,13 +116,13 @@ const OFFLINE_PAGE = `
 <body>
   <div class="offline-container">
     <span class="offline-icon">📡</span>
-    <h1>Ban dang offline</h1>
-    <p>Khong the ket noi internet. FocusFlow can ket noi de tai lai trang.</p>
+    <h1>Bạn đang offline</h1>
+    <p>Không thể kết nối internet. FocusFlow cần kết nối để tải lại trang.</p>
     <button class="retry-btn" onclick="window.location.reload()">
-      🔄 Thu lai
+      🔄 Thử lại
     </button>
     <div class="tip">
-      <p>💡 Meo: Du lieu cua ban van duoc luu tru an toan tren thiet bi. Khi co mang tro lai, moi thu se hoat dong binh thuong.</p>
+      <p>💡 Mẹo: Dữ liệu của bạn vẫn được lưu trữ an toàn trên thiết bị. Khi có mạng trở lại, mọi thứ sẽ hoạt động bình thường.</p>
     </div>
   </div>
 </body>
