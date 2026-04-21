@@ -465,6 +465,12 @@
                 <button class="preset-btn" data-focus-preset="25">25p</button>
                 <button class="preset-btn is-active" data-focus-preset="50">50p</button>
                 <button class="preset-btn" data-focus-preset="90">90p</button>
+                <button class="preset-btn" data-focus-preset="custom" id="custom-preset-btn" aria-expanded="false">Khác</button>
+              </div>
+              <div class="custom-preset-input is-hidden" id="custom-preset-input">
+                <input type="number" id="custom-focus-minutes" min="5" max="180" step="1" placeholder="Nhập phút" inputmode="numeric" />
+                <span class="custom-preset-hint">5–180 phút</span>
+                <button type="button" class="btn btn--ghost btn--small" id="custom-preset-apply">Áp dụng</button>
               </div>
 
               <div class="timer-controls">
@@ -913,7 +919,7 @@
               <h3>Thời lượng</h3>
               <label class="settings-row">
                 <span>Focus (phút)</span>
-                <input id="focus-minutes" type="number" min="10" max="90" />
+                <input id="focus-minutes" type="number" min="5" max="180" />
               </label>
               <label class="settings-row">
                 <span>Break (phút)</span>

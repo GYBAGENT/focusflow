@@ -66,6 +66,10 @@ const els = {
   resetBtn: document.querySelector("#reset-btn"),
   skipBtn: document.querySelector("#skip-btn"),
   presetButtons: document.querySelectorAll("[data-focus-preset]"),
+  customPresetBtn: document.querySelector("#custom-preset-btn"),
+  customPresetWrap: document.querySelector("#custom-preset-input"),
+  customPresetInput: document.querySelector("#custom-focus-minutes"),
+  customPresetApply: document.querySelector("#custom-preset-apply"),
 
   // Tasks
   taskInput: document.querySelector("#task-input"),
@@ -2862,7 +2866,7 @@ function applySettings() {
   const focusValue = Number(els.focusInput.value);
   const breakValue = Number(els.breakInput.value);
   const goalValue = Number(els.goalInput.value);
-  const nextFocus = clamp(focusValue || settings.focusMinutes, 10, 90);
+  const nextFocus = clamp(focusValue || settings.focusMinutes, 5, 180);
 
   settings.focusMinutes = nextFocus;
   settings.breakMinutes = clamp(breakValue || settings.breakMinutes, 3, 30);
@@ -2890,21 +2894,62 @@ function applyGoal() {
   refreshInsights();
 }
 
+const FIXED_PRESETS = [25, 50, 90];
+
 function updatePresetActive(value) {
+  const numeric = Number(value);
+  const isFixed = FIXED_PRESETS.includes(numeric);
   els.presetButtons.forEach((button) => {
-    button.classList.toggle("is-active", Number(button.dataset.focusPreset) === value);
+    const preset = button.dataset.focusPreset;
+    if (preset === "custom") {
+      button.classList.toggle("is-active", !isFixed);
+      button.textContent = isFixed ? "Khác" : `${numeric}p`;
+    } else {
+      button.classList.toggle("is-active", Number(preset) === numeric);
+    }
   });
 }
 
+function toggleCustomPresetInput(show, prefillValue) {
+  if (!els.customPresetWrap || !els.customPresetBtn) return;
+  const shouldShow = show === undefined ? els.customPresetWrap.classList.contains("is-hidden") : show;
+  els.customPresetWrap.classList.toggle("is-hidden", !shouldShow);
+  els.customPresetBtn.setAttribute("aria-expanded", String(shouldShow));
+  if (shouldShow && els.customPresetInput) {
+    if (prefillValue !== undefined) els.customPresetInput.value = prefillValue;
+    els.customPresetInput.classList.remove("is-invalid");
+    setTimeout(() => { els.customPresetInput.focus(); els.customPresetInput.select(); }, 60);
+  }
+}
+
+function applyCustomFocusFromInput() {
+  if (!els.customPresetInput) return;
+  const raw = Number(els.customPresetInput.value);
+  if (Number.isNaN(raw) || raw < 5 || raw > 180) {
+    els.customPresetInput.classList.add("is-invalid");
+    return;
+  }
+  const minutes = clamp(Math.round(raw), 5, 180);
+  applyFocusPreset(minutes);
+  toggleCustomPresetInput(false);
+}
+
 function applyFocusPreset(value) {
-  settings.focusMinutes = value;
+  if (value === "custom") {
+    const current = Number(settings.focusMinutes) || defaultSettings.focusMinutes;
+    const prefill = FIXED_PRESETS.includes(current) ? "" : current;
+    toggleCustomPresetInput(undefined, prefill);
+    return;
+  }
+  const minutes = clamp(Number(value), 5, 180);
+  settings.focusMinutes = minutes;
   saveSettings();
-  els.focusInput.value = value;
-  updatePresetActive(value);
+  if (els.focusInput) els.focusInput.value = minutes;
+  updatePresetActive(minutes);
   if (!(isRunning && mode === "focus")) {
-    currentFocusMinutes = value;
+    currentFocusMinutes = minutes;
     if (mode === "focus") {
-      remainingSeconds = value * 60;
+      remainingSeconds = minutes * 60;
     }
   }
   updateDisplay();
@@ -3766,12 +3811,34 @@ els.notifyToggle.addEventListener("change", handleNotifyToggle);
 
 els.presetButtons.forEach((button) => {
   button.addEventListener("click", () => {
-    const value = Number(button.dataset.focusPreset);
+    const raw = button.dataset.focusPreset;
+    if (raw === "custom") {
+      applyFocusPreset("custom");
+      return;
+    }
+    const value = Number(raw);
     if (!Number.isNaN(value)) {
       applyFocusPreset(value);
     }
   });
 });
+
+if (els.customPresetApply) {
+  els.customPresetApply.addEventListener("click", applyCustomFocusFromInput);
+}
+if (els.customPresetInput) {
+  els.customPresetInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      applyCustomFocusFromInput();
+    } else if (event.key === "Escape") {
+      toggleCustomPresetInput(false);
+    }
+  });
+  els.customPresetInput.addEventListener("input", () => {
+    els.customPresetInput.classList.remove("is-invalid");
+  });
+}
 
 els.dashboardStartTask.addEventListener("click", () => {
   if (dashboardNextTask) {
